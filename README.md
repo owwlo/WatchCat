@@ -1,2 +1,33 @@
 # WatchCat
 WatchCat - yet another Android Remote Surveillance Camera app.
+
+## Features and Limitations
+### Features
+ * Based on a slightly modified version of [https://github.com/fyhertz/libstreaming](https://github.com/fyhertz/libstreaming)
+	 * Android builtin Hardware Acceleration Video Encoding
+	 * H264 & AAC Encoding
+	 * Upto 1080p Video Streaming
+* Automatic Service Discovery within the same LAN
+* **[TODO]** Password-based Access Control
+* **[TODO]** Use [Android ExoPlayer](https://github.com/google/ExoPlayer) to replace libvlc
+* **[TODO]** A better GUI?
+* **[TODO]** Draw a Logo
+
+### Limitations
+* The screen will be kept ON during streaming and standing by
+	* App will set the "brightness" close to 0 to mitigate this issue
+	* _I believe this is due to the Android system level policy. Personally, I haven't figured out a way to capture and to stream the video fully on background with screen off, if you know how to do this, please let me know ;)_
+
+## Screenshots
+TODO
+
+## Tested Devices
+* **[Android 10]** Xiaomi Mi 8 Lite
+* **[Android 8]** Redmi 5 Plus
+
+## Use of other Open Source Projects
+* libstreaming [https://github.com/fyhertz/libstreaming](https://github.com/fyhertz/libstreaming)
+* NsdHelper [https://github.com/rafakob/NsdHelper](https://github.com/rafakob/NsdHelper)
+* fastjson [https://github.com/alibaba/fastjson](https://github.com/alibaba/fastjson)
+* libvlc-android-sdk [https://github.com/masterwok/libvlc-android-sdk](https://github.com/masterwok/libvlc-android-sdk)
+* NanoHttpd [https://github.com/NanoHttpd/nanohttpd](https://github.com/NanoHttpd/nanohttpd)
