@@ -8,10 +8,11 @@ WatchCat - yet another Android Remote Surveillance Camera app.
 	 * H264 & AAC Encoding
 	 * Upto 1080p Video Streaming
 * Automatic Service Discovery within the same LAN
-* **[TODO]** Password-based Access Control
-* **[TODO]** Use [Android ExoPlayer](https://github.com/google/ExoPlayer) to replace libvlc
-* **[TODO]** A better GUI?
-* **[TODO]** Draw a Logo
+#### TODOs
+* Use [Android ExoPlayer](https://github.com/google/ExoPlayer) to replace libvlc
+* Password-based Access Control
+* A better GUI?
+* Logo
 
 ### Limitations
 * The screen will be kept ON during streaming and standing by
