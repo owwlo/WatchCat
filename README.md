@@ -1,4 +1,3 @@
-
 # WatchCat
 WatchCat - yet another Android Remote Surveillance Camera app.
 
@@ -33,5 +32,5 @@ TODO
 * libstreaming [https://github.com/fyhertz/libstreaming](https://github.com/fyhertz/libstreaming)
 * NsdHelper [https://github.com/rafakob/NsdHelper](https://github.com/rafakob/NsdHelper)
 * fastjson [https://github.com/alibaba/fastjson](https://github.com/alibaba/fastjson)
-* libvlc-android-sdk [https://github.com/masterwok/libvlc-android-sdk](https://github.com/masterwok/libvlc-android-sdk)
+* ExoPlayer [https://github.com/google/ExoPlayer](https://github.com/google/ExoPlayer)
 * NanoHttpd [https://github.com/NanoHttpd/nanohttpd](https://github.com/NanoHttpd/nanohttpd)
