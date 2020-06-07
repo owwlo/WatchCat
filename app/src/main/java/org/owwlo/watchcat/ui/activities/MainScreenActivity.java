@@ -24,6 +24,7 @@ import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.model.Camera;
+import org.owwlo.watchcat.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,9 +96,9 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
     @Override
     public void onClick(CameraListAdapter.MyViewHolder holder, Camera camera) {
-        Intent intent = new Intent(this, PlayerActivity.class);
-        intent.putExtra(Constants.INTENT_EXTRA_CAMERA_IP, camera.getIp());
-        intent.putExtra(Constants.INTENT_EXTRA_CAMERA_PORT, camera.getPort());
+        // ExoPlayer
+        Intent intent = new Intent(this, ExoPlayerActivity.class);
+        intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(camera.getIp(), camera.getPort()));
         startActivity(intent);
     }
 

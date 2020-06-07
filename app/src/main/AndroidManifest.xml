@@ -53,7 +53,7 @@
             android:label="@string/app_name"
             android:screenOrientation="userLandscape" />
         <activity
-            android:name=".ui.activities.PlayerActivity"
+            android:name=".ui.activities.ExoPlayerActivity"
             android:hardwareAccelerated="true"></activity>
 
         <service android:name=".libstreaming.RtspServer" />

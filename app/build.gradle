@@ -22,6 +22,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 
 }
 
@@ -36,8 +40,10 @@ dependencies {
     implementation 'com.github.rafakob:NsdHelper:0.1.4'
     implementation 'com.alibaba:fastjson:1.2.68'
     implementation 'com.android.volley:volley:1.1.1'
-    implementation 'com.github.masterwok:libvlc-android-sdk:3.0.13'
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+    implementation project(path: ':exoplayer-library-ui')
+    implementation project(path: ':exoplayer-library-core')
+    implementation project(path: ':exoplayer-library-rtsp')
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

@@ -8,4 +8,7 @@
     <string name="title_activity_camera_viewer">CameraViewer</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <string name="application_name">WatchCat Player</string>
+    <string name="error_no_stream_selected">No stream is selected.</string>
 </resources>
