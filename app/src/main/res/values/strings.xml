@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">WatchCat</string>
+    <string name="password_hint">Set Access Password</string>
+    <string name="title_activity_main_screen">MainScreen</string>
+
+    <string name="title_activity_camera_viewer">CameraViewer</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>

@@ -1,0 +1,43 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/camera_list"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        app:cardUseCompatPadding="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.android.volley.toolbox.NetworkImageView
+                android:id="@+id/image_camera_preview"
+                android:layout_width="320dp"
+                android:layout_height="180dp"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"/>
+
+<!--            <ImageView-->
+<!--                android:id="@+id/image_camera_preview"-->
+<!--                android:layout_width="320dp"-->
+<!--                android:layout_height="180dp"-->
+<!--                android:src="@drawable/ic_launcher" />-->
+
+            <TextView
+                android:id="@+id/text_camera_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="I am a camera"
+                android:textColor="#000"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+</LinearLayout>

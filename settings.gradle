@@ -1,0 +1,3 @@
+rootProject.name='WatchCat'
+include ':app', ':playerlibrary'
+
