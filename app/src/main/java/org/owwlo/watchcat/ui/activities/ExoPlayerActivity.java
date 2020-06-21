@@ -3,11 +3,13 @@ package org.owwlo.watchcat.ui.activities;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.android.exoplayer2.Player;
@@ -37,6 +39,11 @@ public final class ExoPlayerActivity extends Activity {
 
   @Nullable
   private SimpleExoPlayer player;
+
+  @Override
+  public void onConfigurationChanged(@NonNull Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+  }
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {

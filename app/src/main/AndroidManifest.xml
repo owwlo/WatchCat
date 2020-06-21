@@ -54,7 +54,9 @@
             android:screenOrientation="userLandscape" />
         <activity
             android:name=".ui.activities.ExoPlayerActivity"
-            android:hardwareAccelerated="true"></activity>
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@style/Theme.MaterialComponents.DayNight.DarkActionBar"></activity>
 
         <service android:name=".libstreaming.RtspServer" />
     </application>
