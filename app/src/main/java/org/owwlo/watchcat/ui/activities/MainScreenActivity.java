@@ -9,8 +9,10 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.View;
 import android.widget.Button;
 
@@ -59,6 +61,22 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     };
     // ServiceDaemon binding ends
 
+    int getSpan() {
+        Display display = getWindowManager().getDefaultDisplay();
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        display.getMetrics(outMetrics);
+
+        float density = getResources().getDisplayMetrics().density;
+        float dpHeight = outMetrics.heightPixels / density;
+        float dpWidth = outMetrics.widthPixels / density;
+
+        Log.d(TAG, "dpHeight: " + dpHeight + ", dpWidth: " + dpWidth);
+
+        int dpMin = (int) Math.min(dpHeight, dpWidth);
+        int dpItemWidth = dpMin < Constants.PREVIEW_DEFAULT_WIDTH_IN_DP ? dpMin : Constants.PREVIEW_DEFAULT_WIDTH_IN_DP;
+        return (int) (dpWidth / dpItemWidth);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,9 +91,11 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mCameraAdapter = new CameraListAdapter(this, mCameraList);
         mCameraAdapter.registerListener(this);
 
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 1);
+        int span = getSpan();
+
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, span);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
+        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(span, dpToPx(10), true));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mCameraAdapter);
 

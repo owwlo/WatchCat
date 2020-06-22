@@ -1,19 +1,19 @@
 package org.owwlo.watchcat.utils;
 
 public class Constants {
-
-    public static int WATCHCAT_API_VER = 1;
+    public final static int WATCHCAT_API_VER = 1;
     //    public static String NSD_SERVICE_TYPE = "_watchcat._client"; TODO remove
-    public static int CONTROL_PORT = 57525;
-    public static int STREAMING_PORT = 57526;
-    public static String INTENT_EXTRA_CAMERA_IP = "INTENT_EXTRA_CAMERA_IP";
-    public static String INTENT_EXTRA_CAMERA_PORT = "INTENT_EXTRA_CAMERA_PORT";
+    public final static int CONTROL_PORT = 57525;
+    public final static int STREAMING_PORT = 57526;
+    public final static String INTENT_EXTRA_CAMERA_IP = "INTENT_EXTRA_CAMERA_IP";
+    public final static String INTENT_EXTRA_CAMERA_PORT = "INTENT_EXTRA_CAMERA_PORT";
+    public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 310;
 
     public static class RtspServerConstants {
-        public static String INTENT_USERNAME = "INTENT_USERNAME";
-        public static String INTENT_PASSWORD = "INTENT_PASSWORD";
-        public static String INTENT_PORT = "INTENT_PORT";
+        public final static String INTENT_USERNAME = "INTENT_USERNAME";
+        public final static String INTENT_PASSWORD = "INTENT_PASSWORD";
+        public final static String INTENT_PORT = "INTENT_PORT";
     }
 
-    public static String PREVIEW_FILENAME = "QY7TTVJ7VG7QPHYQXHD3B838Q";
+    public final static String PREVIEW_FILENAME = "QY7TTVJ7VG7QPHYQXHD3B838Q";
 }

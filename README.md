@@ -26,6 +26,7 @@ TODO
 
 ## Tested Devices
 * **[Android 10]** Xiaomi Mi 8 Lite
+* **[Android 9]** Teclast T30 **_(tablet)_**
 * **[Android 8]** Redmi 5 Plus
 
 ## Use of other Open Source Projects
