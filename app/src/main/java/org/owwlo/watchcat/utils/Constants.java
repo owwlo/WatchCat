@@ -9,6 +9,9 @@ public class Constants {
     public final static String INTENT_EXTRA_CAMERA_PORT = "INTENT_EXTRA_CAMERA_PORT";
     public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 310;
 
+    public final static int NSD_TIMEOUT_SECS = 10;
+    public final static int NSD_CHECKALIVE_INTERVAL_SECS = 5;
+
     public static class RtspServerConstants {
         public final static String INTENT_USERNAME = "INTENT_USERNAME";
         public final static String INTENT_PASSWORD = "INTENT_PASSWORD";

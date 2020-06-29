@@ -28,7 +28,6 @@ public class Utils {
      * Check if valid IPV4 address.
      *
      * @param input the address string to check for validity.
-     *
      * @return True if the input parameter is a valid IPv4 address.
      */
     public static boolean isIPv4Address(String input) {
@@ -68,24 +67,25 @@ public class Utils {
             socket = new ServerSocket(0);
             return socket.getLocalPort();
         } catch (IOException e) {
-            Log.e(TAG,"Couldn't assign port to your service.");
+            Log.e(TAG, "Couldn't assign port to your service.");
             e.printStackTrace();
             return 0;
         }
     }
 
-    public static String getCameraStreamingURI(String ip, int port)
-    {
-        return "rtsp://"  + ip + ":" + port + "/";
+    public static String getCameraStreamingURI(String ip, int port) {
+        return "rtsp://" + ip + ":" + port + "/";
     }
 
-    public static String getCameraPreviewURI(String ip, int port)
-    {
-        return "http://"  + ip + ":" + port + "/control/get_preview";
+    public static String getCameraPreviewURI(String ip, int port) {
+        return "http://" + ip + ":" + port + "/control/get_preview";
     }
 
-    public static File getPreviewPath()
-    {
+    public static String getCameraInfoURI(String ip) {
+        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/control/get_info";
+    }
+
+    public static File getPreviewPath() {
         ContextWrapper contextWrapper = new ContextWrapper(sContext);
         return new File(contextWrapper.getExternalFilesDir(null), Constants.PREVIEW_FILENAME);
     }
