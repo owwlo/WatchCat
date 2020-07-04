@@ -10,7 +10,7 @@ public class Constants {
     public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 310;
 
     public final static int NSD_TIMEOUT_SECS = 10;
-    public final static int NSD_CHECKALIVE_INTERVAL_SECS = 5;
+    public final static int NSD_CHECKALIVE_INTERVAL_SECS = 5000;
 
     public static class RtspServerConstants {
         public final static String INTENT_USERNAME = "INTENT_USERNAME";

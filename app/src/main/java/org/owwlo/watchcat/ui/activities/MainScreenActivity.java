@@ -14,18 +14,19 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
-import android.widget.Button;
 
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import org.owwlo.watchcat.R;
+import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.model.CameraInfo;
+import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.ui.CameraListAdapter;
 import org.owwlo.watchcat.utils.Constants;
-import org.owwlo.watchcat.R;
-import org.owwlo.watchcat.services.ServiceDaemon;
-import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.utils.Utils;
 
 import java.util.ArrayList;
@@ -35,7 +36,8 @@ import java.util.List;
 public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraManager.RemoteCameraEventListener, CameraListAdapter.OnClickListener {
     private final static String TAG = MainScreenActivity.class.getCanonicalName();
 
-    private Button mBtnCameraMode;
+    private View mBtnCameraMode;
+    private FloatingActionButton mBtnCameraModeFab;
     private ServiceDaemon mMainService = null;
 
     private RecyclerView mRecyclerView;
@@ -82,8 +84,10 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_screen);
 
-        mBtnCameraMode = findViewById(R.id.btn_camera_mode);
+        mBtnCameraMode = findViewById(R.id.camera_mode_button);
+        mBtnCameraModeFab = findViewById(R.id.camera_mode_button_fab);
         mBtnCameraMode.setOnClickListener(this);
+        mBtnCameraModeFab.setOnClickListener(this);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
 
@@ -106,7 +110,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     public void onClick(View v) {
         int id = v.getId();
         switch (id) {
-            case R.id.btn_camera_mode: {
+            case R.id.camera_mode_button_fab:
+            case R.id.camera_mode_button: {
                 Intent intent = new Intent(this, CameraActivity.class);
                 startActivity(intent);
                 break;
@@ -134,11 +139,12 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         int idx = -1;
         for (int i = 0; i < mCameraList.size(); i++) {
             Camera camera = mCameraList.get(i);
-            if (camera.getIp() == ip) {
+            if (camera.getIp().equals(ip)) {
                 idx = i;
                 break;
             }
         }
+
         if (idx >= 0) {
             mCameraList.remove(idx);
             mCameraAdapter.notifyItemRemoved(idx);

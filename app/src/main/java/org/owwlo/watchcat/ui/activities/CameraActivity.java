@@ -158,6 +158,7 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
                 break;
             }
             case R.id.btn_camera_back_main: {
+                toggleCamera(false);
                 finish();
                 break;
             }
