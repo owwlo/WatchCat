@@ -44,6 +44,7 @@ dependencies {
     implementation project(path: ':exoplayer-library-ui')
     implementation project(path: ':exoplayer-library-core')
     implementation project(path: ':exoplayer-library-rtsp')
+    implementation 'org.jetbrains:annotations:15.0'
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

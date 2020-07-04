@@ -26,6 +26,7 @@ import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.ui.CameraListAdapter;
+import org.owwlo.watchcat.ui.EmptyRecyclerView;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Utils;
 
@@ -40,7 +41,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     private FloatingActionButton mBtnCameraModeFab;
     private ServiceDaemon mMainService = null;
 
-    private RecyclerView mRecyclerView;
+    private EmptyRecyclerView mRecyclerView;
+    private View mListEmptyPlaceholder;
     private CameraListAdapter mCameraAdapter;
     private List<Camera> mCameraList;
 
@@ -89,7 +91,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mBtnCameraMode.setOnClickListener(this);
         mBtnCameraModeFab.setOnClickListener(this);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mRecyclerView = findViewById(R.id.recycler_view);
+        mListEmptyPlaceholder = findViewById(R.id.list_empty_placeholder);
 
         mCameraList = new ArrayList<>();
         mCameraAdapter = new CameraListAdapter(this, mCameraList);
@@ -102,6 +105,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(span, dpToPx(10), true));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mCameraAdapter);
+        mRecyclerView.setEmptyView(mListEmptyPlaceholder);
 
         bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
@@ -148,6 +152,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         if (idx >= 0) {
             mCameraList.remove(idx);
             mCameraAdapter.notifyItemRemoved(idx);
+            mCameraAdapter.notifyDataSetChanged();
         }
     }
 

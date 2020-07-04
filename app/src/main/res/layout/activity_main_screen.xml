@@ -2,6 +2,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
@@ -35,7 +36,7 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:context="com.sohaildani.cardview.MainActivity">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <org.owwlo.watchcat.ui.EmptyRecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -58,10 +59,10 @@
             app:layout_constraintRight_toRightOf="parent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/camera_mode_button_fab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="#58B7FF"
-                android:id="@+id/camera_mode_button_fab"
                 app:fabSize="mini"
                 app:srcCompat="@drawable/ic_baseline_linked_camera"
                 app:useCompatPadding="true" />
@@ -70,7 +71,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginLeft="-40dp"
+                android:layout_marginStart="-40dp"
                 android:layout_toRightOf="@+id/fab_add_my_album_listing"
                 android:background="@drawable/float_action_button_background"
                 android:paddingLeft="30dp"
@@ -85,5 +86,9 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <include
+        android:id="@+id/list_empty_placeholder"
+        layout="@layout/list_empty_placeholder" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
