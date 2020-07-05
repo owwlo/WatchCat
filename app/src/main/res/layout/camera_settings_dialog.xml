@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_baseline_settings" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Settings"
+                android:textSize="28sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/camera_description"
+            android:layout_width="320dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginBottom="4dp"
+            android:hint="Camera Description..."
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/camera_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="4dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="4dp"
+            android:fontFamily="sans-serif"
+            android:hint="Access Password"
+            android:inputType="textPassword" />
+
+        <Button
+            android:id="@+id/settings_done_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:text="OKAY"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+</RelativeLayout>
