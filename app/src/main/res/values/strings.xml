@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">WatchCat</string>
     <string name="password_hint">Set Access Password</string>
     <string name="title_activity_main_screen">MainScreen</string>
@@ -11,4 +10,8 @@
 
     <string name="application_name">WatchCat Player</string>
     <string name="error_no_stream_selected">No stream is selected.</string>
+
+    <string name="btn_confirm">Apply</string>
+    <string name="btn_cancel">Cancel</string>
+
 </resources>

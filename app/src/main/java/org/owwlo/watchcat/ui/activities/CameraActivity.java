@@ -1,7 +1,7 @@
 package org.owwlo.watchcat.ui.activities;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,19 +12,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ToggleButton;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentActivity;
 
-import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.R;
+import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
+import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.utils.Utils;
 
 import java.io.BufferedOutputStream;
@@ -34,13 +38,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 
-public class CameraActivity extends Activity implements SurfaceHolder.Callback, View.OnClickListener {
+public class CameraActivity extends FragmentActivity implements SurfaceHolder.Callback, View.OnClickListener {
     private final static String TAG = CameraActivity.class.getCanonicalName();
 
     private SurfaceView mSurfaceView = null;
-    private ToggleButton mToogleCamera = null;
     private CameraDaemon mCameraDaemon = null;
-    private Button mBack = null;
+    private FloatingActionButton mBtnSettings = null;
+    private View mBtnToggleCamera = null;
+    private FloatingActionButton mBtnToggleCameraFab = null;
+    private FloatingActionButton mBtnBack = null;
+
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -99,12 +106,16 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_camera);
-        mSurfaceView = (SurfaceView) findViewById(R.id.surface);
-        mToogleCamera = (ToggleButton) findViewById(R.id.toggle_camera_access);
-        mBack = (Button) findViewById(R.id.btn_camera_back_main);
+        mSurfaceView = findViewById(R.id.surface);
+        mBtnSettings = findViewById(R.id.camera_setting_button);
+        mBtnToggleCamera = findViewById(R.id.camera_start_serving_button);
+        mBtnToggleCameraFab = findViewById(R.id.camera_start_serving_button_fab);
+        mBtnBack = findViewById(R.id.camera_exit_button);
 
-        mToogleCamera.setOnClickListener(this);
-        mBack.setOnClickListener(this);
+        mBtnSettings.setOnClickListener(this);
+        mBtnToggleCamera.setOnClickListener(this);
+        mBtnToggleCameraFab.setOnClickListener(this);
+        mBtnBack.setOnClickListener(this);
 
         // TODO do I need to start the service explicitly
         bindService(new Intent(this, CameraDaemon.class), mConnection, Context.BIND_AUTO_CREATE);
@@ -148,18 +159,52 @@ public class CameraActivity extends Activity implements SurfaceHolder.Callback, 
     public void surfaceDestroyed(SurfaceHolder holder) {
     }
 
+    public static class CameraSettingsDialogFragment extends DialogFragment implements View.OnClickListener {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            LayoutInflater inflater = requireActivity().getLayoutInflater();
+            View inner = inflater.inflate(R.layout.camera_settings_dialog, null);
+
+            Button apply = inner.findViewById(R.id.settings_done_button);
+            Button cancel = inner.findViewById(R.id.settings_cancel_button);
+            apply.setOnClickListener(CameraSettingsDialogFragment.this);
+            cancel.setOnClickListener(CameraSettingsDialogFragment.this);
+
+            return builder.setView(inner).create();
+        }
+
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+            switch (id) {
+                case R.id.settings_done_button: {
+                    CameraSettingsDialogFragment.this.dismiss();
+                }
+                case R.id.settings_cancel_button: {
+                    CameraSettingsDialogFragment.this.dismiss();
+                }
+            }
+        }
+    }
 
     @Override
     public void onClick(View v) {
         int id = v.getId();
         switch (id) {
-            case R.id.toggle_camera_access: {
-                toggleCamera(mToogleCamera.isChecked());
+            case R.id.camera_start_serving_button_fab:
+            case R.id.camera_start_serving_button: {
+                toggleCamera(true);
                 break;
             }
-            case R.id.btn_camera_back_main: {
+            case R.id.camera_exit_button: {
                 toggleCamera(false);
                 finish();
+                break;
+            }
+            case R.id.camera_setting_button: {
+                DialogFragment newFragment = new CameraSettingsDialogFragment();
+                newFragment.show(getSupportFragmentManager(), null);
                 break;
             }
         }

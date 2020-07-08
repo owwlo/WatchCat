@@ -22,7 +22,6 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="#58B7FF"
                 android:layout_marginLeft="@dimen/fab_margin"
-                android:layout_marginTop="@dimen/fab_margin"
                 app:fabSize="mini"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
@@ -81,7 +80,7 @@
             android:id="@+id/surface_layout"
             android:layout_width="0px"
             android:layout_height="0px"
-            app:layout_constraintBottom_toTopOf="@id/camera_options"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -93,22 +92,6 @@
                 android:orientation="vertical"
                 app:layout_constraintGuide_percent="0.5" />
 
-            <LinearLayout
-                android:id="@+id/camera_tool_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:foregroundGravity="center_horizontal"
-                android:orientation="vertical"
-                app:layout_constraintRight_toLeftOf="@id/surface">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_camera_back_main"
-                    style="@style/AppTheme.Button.IconButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:icon="@drawable/ic_arrow_back_black_24dp" />
-            </LinearLayout>
-
             <org.owwlo.watchcat.libstreaming.gl.SurfaceView
                 android:id="@+id/surface"
                 android:layout_width="0px"
@@ -116,58 +99,9 @@
                 app:layout_constraintDimensionRatio="W,16:9"
                 app:layout_constraintLeft_toLeftOf="@id/guideline"
 
-                app:layout_constraintLeft_toRightOf="@id/camera_tool_bar"
                 app:layout_constraintRight_toRightOf="@id/guideline"
                 tools:layout_editor_absoluteY="8dp" />
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <LinearLayout
-            android:id="@+id/camera_options"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal|top"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/surface_layout">
-
-            <EditText
-                android:id="@+id/passwordEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:enabled="false"
-                android:gravity="center"
-                android:hint="@string/password_hint"
-                android:importantForAutofill="no"
-                android:inputType="textPassword"
-                android:selectAllOnFocus="false"
-                android:singleLine="true" />
-
-            <ToggleButton
-                android:id="@+id/toggle_set_access_password"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="false"
-                android:enabled="false"
-                android:text="Set" />
-
-            <View
-                android:id="@+id/divider"
-                android:layout_width="10dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/listDivider" />
-
-            <ToggleButton
-                android:id="@+id/toggle_camera_access"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="false"
-                android:text="Set"
-                android:textOff="Enable Camera"
-                android:textOn="Disable Camera" />
-
-        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
