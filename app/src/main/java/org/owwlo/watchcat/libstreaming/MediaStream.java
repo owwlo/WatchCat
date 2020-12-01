@@ -88,7 +88,6 @@ public abstract class MediaStream implements Stream {
 
     private int mTTL = 64;
 
-    protected MediaRecorder mMediaRecorder;
     protected MediaCodec mMediaCodec;
 
     static {

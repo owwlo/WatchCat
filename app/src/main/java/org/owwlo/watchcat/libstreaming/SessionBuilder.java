@@ -144,7 +144,7 @@ public class SessionBuilder {
             audio.setAudioQuality(mAudioQuality);
             audio.setDestinationPorts(5004);
         }
-
+        session.configure();
         return session;
 
     }

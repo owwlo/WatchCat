@@ -89,22 +89,26 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         SessionBuilder.getInstance()
                 .setCallback(this)
                 .setContext(getApplicationContext())
-                .setPreviewOrientation(180)
                 .setAudioEncoder(SessionBuilder.AUDIO_NONE)
                 .setVideoEncoder(SessionBuilder.VIDEO_H264)
                 .setVideoQuality(new VideoQuality(1920, 1080, 30, 1500000));
         sInstance = this;
     }
 
-    public void startPreviewing(SurfaceView surfaceView, int rotation) {
+    public void startPreviewing(SurfaceView surfaceView, int angle) {
         stopPreviewing();
-        mCurrentSession = SessionBuilder.getInstance().setSurfaceView(surfaceView).setPreviewOrientation(rotation).build();
+        mCurrentSession = SessionBuilder.getInstance().setSurfaceView(surfaceView).setPreviewOrientation(angle).build();
         mCurrentSession.startPreview();
     }
 
     public Bitmap getLastPreviewImage() {
         if (mCurrentSession == null) return null;
         return mCurrentSession.getLastPreviewImage();
+    }
+
+    public void updateCurrentSessionRotation(int angle) {
+        if (mCurrentSession == null) return;
+        mCurrentSession.setPreviewOrientation(angle);
     }
 
     public void stopPreviewing() {

@@ -6,25 +6,31 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.os.Build;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.listener.multi.BaseMultiplePermissionsListener;
 
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
@@ -37,9 +43,43 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-
-public class CameraActivity extends FragmentActivity implements SurfaceHolder.Callback, View.OnClickListener {
+public class CameraActivity extends FragmentActivity implements SurfaceHolder.Callback, View.OnClickListener, SensorEventListener {
     private final static String TAG = CameraActivity.class.getCanonicalName();
+
+    public static class PermissionsListener extends BaseMultiplePermissionsListener {
+        public interface CheckCallback {
+            void results(MultiplePermissionsReport report);
+        }
+
+        private final Context context;
+        private final CheckCallback resultsCallback;
+
+        private PermissionsListener(Context context,
+                                    CheckCallback allGrantedCallback) {
+            this.context = context;
+            this.resultsCallback = allGrantedCallback;
+        }
+
+        @Override
+        public void onPermissionsChecked(MultiplePermissionsReport report) {
+            super.onPermissionsChecked(report);
+            if (!report.areAllPermissionsGranted()) {
+                showDialog();
+            }
+            resultsCallback.results(report);
+
+        }
+
+        private void showDialog() {
+            new AlertDialog.Builder(context)
+                    .setTitle("Permissions Require")
+                    .setMessage("Camera & Audio: required to record the live stream; Storage: required to store the thumbnail.")
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        dialog.dismiss();
+                    })
+                    .show();
+        }
+    }
 
     private SurfaceView mSurfaceView = null;
     private CameraDaemon mCameraDaemon = null;
@@ -47,61 +87,76 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     private View mBtnToggleCamera = null;
     private FloatingActionButton mBtnToggleCameraFab = null;
     private FloatingActionButton mBtnBack = null;
+    private SensorManager mSensorManager = null;
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private int mLastOrientation = 0;
 
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            CameraDaemon.LocalBinder binder = (CameraDaemon.LocalBinder) service;
-            mCameraDaemon = binder.getService();
-            setPreviewEnable(true);
+    private ServiceConnection mConnection;
+
+    int getRotation() {
+        int angle = 0;
+        switch (mLastOrientation) {
+            case Surface.ROTATION_90:
+                angle = 0;
+                break;
+            case Surface.ROTATION_180:
+                angle = 180;
+                break;
+            case Surface.ROTATION_270:
+                angle = 180;
+                break;
+            default:
+                angle = 90;
+                break;
         }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            setPreviewEnable(false);
-            mCameraDaemon = null;
-        }
-    };
+        return angle;
+    }
 
     private void setPreviewEnable(boolean isEnabled) {
         if (isEnabled) {
-            mCameraDaemon.startPreviewing(mSurfaceView, 180);
+            mCameraDaemon.startPreviewing(mSurfaceView, getRotation());
         } else {
             mCameraDaemon.stopPreviewing();
         }
     }
 
-    public boolean isStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(TAG, "Permission is granted");
-                return true;
-            } else {
-
-                Log.v(TAG, "Permission is revoked");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                return false;
-            }
-        } else { // permission is automatically granted on sdk<23 upon installation
-            Log.v(TAG, "Permission is granted");
-            return true;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Log.v(TAG, "Permission: " + permissions[0] + "was " + grantResults[0]);
-        }
+    private void restartPreviewing() {
+        setPreviewEnable(false);
+        setPreviewEnable(true);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Dexter.withContext(this)
+                .withPermissions(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.RECORD_AUDIO
+                ).withListener(new PermissionsListener(this, report -> {
+            if (report.areAllPermissionsGranted()) {
+                mConnection = new ServiceConnection() {
+                    @Override
+                    public void onServiceConnected(ComponentName className,
+                                                   IBinder service) {
+                        CameraDaemon.LocalBinder binder = (CameraDaemon.LocalBinder) service;
+                        mCameraDaemon = binder.getService();
+                        setPreviewEnable(true);
+                    }
+
+                    @Override
+                    public void onServiceDisconnected(ComponentName arg0) {
+                        setPreviewEnable(false);
+                        mCameraDaemon = null;
+                    }
+                };
+                // TODO do I need to start the service explicitly
+                bindService(new Intent(this, CameraDaemon.class), mConnection, Context.BIND_AUTO_CREATE);
+            } else {
+                this.finish();
+            }
+        })).onSameThread().check();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -117,46 +172,62 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         mBtnToggleCameraFab.setOnClickListener(this);
         mBtnBack.setOnClickListener(this);
 
-        // TODO do I need to start the service explicitly
-        bindService(new Intent(this, CameraDaemon.class), mConnection, Context.BIND_AUTO_CREATE);
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager.registerListener(this,
+                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
-                PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
-                    50);
-        }
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
-                    0);
-        }
-
-        isStoragePermissionGranted();
-        // mSurfaceView.getHolder().addCallback(this);
+        mSurfaceView.getHolder().addCallback(this);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Log.v(TAG, "onConfigurationChanged");
+
+    }
 
     @Override
     protected void onStop() {
         super.onStop();
         unbindService(mConnection);
+        mSensorManager.unregisterListener(this);
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        Log.v(TAG, "surfaceCreated");
+
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.v(TAG, "surfaceChanged");
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.v(TAG, "surfaceDestroyed");
+
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        if (mCameraDaemon != null && rotation != mLastOrientation) {
+            mLastOrientation = rotation;
+            restartPreviewing();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 
     public static class CameraSettingsDialogFragment extends DialogFragment implements View.OnClickListener {
@@ -210,7 +281,36 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         }
     }
 
+    void setAllowOrientate(boolean isAllow) {
+        if (isAllow) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+
+        } else {
+            int requestedOrientation = 0;
+            switch (mLastOrientation) {
+                case Surface.ROTATION_0: {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+                    break;
+                }
+                case Surface.ROTATION_90: {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+                    break;
+                }
+                case Surface.ROTATION_180: {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                    break;
+                }
+                case Surface.ROTATION_270: {
+                    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                    break;
+                }
+            }
+            setRequestedOrientation(requestedOrientation);
+        }
+    }
+
     private void toggleCamera(boolean isEnabled) {
+        setAllowOrientate(!isEnabled);
         if (isEnabled) {
             File target = Utils.getPreviewPath();
             Bitmap bmp = mCameraDaemon.getLastPreviewImage();

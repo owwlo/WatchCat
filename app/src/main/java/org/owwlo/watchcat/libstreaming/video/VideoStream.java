@@ -65,7 +65,7 @@ public abstract class VideoStream extends MediaStream {
     protected SurfaceView mSurfaceView = null;
     protected SharedPreferences mSettings = null;
     protected int mVideoEncoder, mCameraId = 0;
-    protected int mRequestedOrientation = 0, mOrientation = 0;
+    protected int mOrientation = 0;
     protected Camera mCamera;
     protected Thread mCameraThread;
     protected Looper mCameraLooper;
@@ -234,7 +234,7 @@ public abstract class VideoStream extends MediaStream {
      * @param orientation The orientation of the preview
      */
     public void setPreviewOrientation(int orientation) {
-        mRequestedOrientation = orientation;
+        mOrientation = orientation;
         mUpdated = false;
     }
 
@@ -273,7 +273,6 @@ public abstract class VideoStream extends MediaStream {
      */
     public synchronized void configure() throws IllegalStateException, IOException {
         super.configure();
-        mOrientation = mRequestedOrientation;
     }
 
     /**
@@ -316,15 +315,14 @@ public abstract class VideoStream extends MediaStream {
         if (!mPreviewStarted) {
             createCamera();
             updateCamera();
-
-            Camera.PreviewCallback callback = new Camera.PreviewCallback() {
-                @Override
-                public void onPreviewFrame(byte[] data, Camera camera) {
-                    mLastPreview = data;
-                }
-            };
-            mCamera.setPreviewCallback(callback);
         }
+        Camera.PreviewCallback callback = new Camera.PreviewCallback() {
+            @Override
+            public void onPreviewFrame(byte[] data, Camera camera) {
+                mLastPreview = data;
+            }
+        };
+        mCamera.setPreviewCallback(callback);
     }
 
     public Bitmap getLastPreviewImage() {
@@ -504,7 +502,6 @@ public abstract class VideoStream extends MediaStream {
             });
 
             try {
-
                 // If the phone has a flash, we turn it on/off according to mFlashEnabled
                 // setRecordingHint(true) is a very nice optimization if you plane to only use the Camera for recording
                 Parameters parameters = mCamera.getParameters();

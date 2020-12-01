@@ -1,64 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".ui.activities.CameraActivity"
-    android:background="@android:color/background_dark">
+    android:background="@android:color/background_dark"
+    tools:context=".ui.activities.CameraActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-        <org.owwlo.watchcat.libstreaming.gl.SurfaceView
-            android:id="@+id/surface"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="32dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginBottom="32dp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:elevation="1dp">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/camera_exit_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/fab_margin"
+                android:backgroundTint="#58B7FF"
+                app:fabSize="mini"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_baseline_keyboard_arrow_left"
+                app:useCompatPadding="true" />
+
+            <LinearLayout
+                android:id="@+id/camera_start_serving_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/fab_margin"
+                android:layout_marginBottom="@dimen/fab_margin"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/camera_start_serving_button_fab"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#58B7FF"
+                    app:fabSize="mini"
+                    app:srcCompat="@drawable/ic_baseline_play_circle_filled"
+                    app:useCompatPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="-30dp"
+                    android:background="@drawable/float_action_button_background"
+                    android:paddingLeft="30dp"
+                    android:paddingTop="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingBottom="10dp"
+                    android:text="Enable Camera"
+                    android:textColor="#FAFAFA"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/camera_setting_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/fab_margin"
+                android:backgroundTint="#58B7FF"
+                app:fabSize="mini"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/camera_start_serving_button"
+                app:srcCompat="@drawable/ic_baseline_settings"
+                app:useCompatPadding="false" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/surface_layout"
+            android:layout_width="0px"
+            android:layout_height="0px"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintDimensionRatio="H,16:9"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <org.owwlo.watchcat.libstreaming.gl.SurfaceView
+                android:id="@+id/surface"
+                android:layout_width="0px"
+                android:layout_height="0px"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="16:9"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginLeft="32dp"
-        android:layout_marginRight="32dp"
-        android:gravity="center_horizontal|top"
-        android:orientation="vertical">
-
-        <EditText
-            android:id="@+id/passwordEdit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:gravity="center"
-            android:hint="@string/password_hint"
-            android:importantForAutofill="no"
-            android:inputType="textPassword"
-            android:selectAllOnFocus="false"
-            android:singleLine="true" />
-
-        <ToggleButton
-            android:id="@+id/enableCameraToggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:text="ToggleButton" />
-
-    </LinearLayout>
-
 
 </LinearLayout>
