@@ -35,6 +35,7 @@ import com.karumi.dexter.listener.multi.BaseMultiplePermissionsListener;
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.services.CameraDaemon;
+import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.Utils;
 
 import java.io.BufferedOutputStream;
@@ -82,7 +83,6 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     }
 
     private SurfaceView mSurfaceView = null;
-    private CameraDaemon mCameraDaemon = null;
     private FloatingActionButton mBtnSettings = null;
     private View mBtnToggleCamera = null;
     private FloatingActionButton mBtnToggleCameraFab = null;
@@ -91,7 +91,37 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
     private int mLastOrientation = 0;
 
-    private ServiceConnection mConnection;
+    private CameraDaemon mCameraDaemon = null;
+    private ServiceDaemon mServiceDaemon = null;
+    private ServiceConnection mCameraDaemonConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            CameraDaemon.LocalBinder binder = (CameraDaemon.LocalBinder) service;
+            mCameraDaemon = binder.getService();
+            setPreviewEnable(true);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            setPreviewEnable(false);
+            mCameraDaemon = null;
+        }
+    };
+    private ServiceConnection mServiceDaemonConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            ServiceDaemon.LocalBinder binder = (ServiceDaemon.LocalBinder) service;
+            mServiceDaemon = binder.getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mServiceDaemon = null;
+        }
+    };
+
 
     int getRotation() {
         int angle = 0;
@@ -129,35 +159,6 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Dexter.withContext(this)
-                .withPermissions(
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.RECORD_AUDIO
-                ).withListener(new PermissionsListener(this, report -> {
-            if (report.areAllPermissionsGranted()) {
-                mConnection = new ServiceConnection() {
-                    @Override
-                    public void onServiceConnected(ComponentName className,
-                                                   IBinder service) {
-                        CameraDaemon.LocalBinder binder = (CameraDaemon.LocalBinder) service;
-                        mCameraDaemon = binder.getService();
-                        setPreviewEnable(true);
-                    }
-
-                    @Override
-                    public void onServiceDisconnected(ComponentName arg0) {
-                        setPreviewEnable(false);
-                        mCameraDaemon = null;
-                    }
-                };
-                // TODO do I need to start the service explicitly
-                bindService(new Intent(this, CameraDaemon.class), mConnection, Context.BIND_AUTO_CREATE);
-            } else {
-                this.finish();
-            }
-        })).onSameThread().check();
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_camera);
@@ -183,7 +184,24 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     protected void onStart() {
         super.onStart();
         mSurfaceView.getHolder().addCallback(this);
+
+        Dexter.withContext(this)
+                .withPermissions(
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.RECORD_AUDIO
+                ).withListener(new PermissionsListener(this, report -> {
+            if (report.areAllPermissionsGranted()) {
+                // TODO do I need to start the service explicitly
+                bindService(new Intent(this, CameraDaemon.class), mCameraDaemonConnection, Context.BIND_AUTO_CREATE);
+            } else {
+                this.finish();
+            }
+        })).onSameThread().check();
+
+        bindService(new Intent(this, ServiceDaemon.class), mServiceDaemonConnection, Context.BIND_AUTO_CREATE);
     }
+
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -195,7 +213,8 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(mConnection);
+        unbindService(mServiceDaemonConnection);
+        unbindService(mCameraDaemonConnection);
         mSensorManager.unregisterListener(this);
     }
 
@@ -220,6 +239,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     public void onSensorChanged(SensorEvent event) {
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
         if (mCameraDaemon != null && rotation != mLastOrientation) {
+            Log.d(TAG, "new rotation: " + rotation);
             mLastOrientation = rotation;
             restartPreviewing();
         }
@@ -323,7 +343,9 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
                 }
                 bmp.compress(Bitmap.CompressFormat.JPEG, 75, bos);
             } finally {
-                bmp.recycle();
+                if (bmp != null) {
+                    bmp.recycle();
+                }
                 if (bos != null) {
                     try {
                         bos.close();

@@ -65,6 +65,18 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     };
     // ServiceDaemon binding ends
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(mServiceConnection);
+    }
+
     int getSpan() {
         Display display = getWindowManager().getDefaultDisplay();
         DisplayMetrics outMetrics = new DisplayMetrics();
@@ -106,8 +118,6 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mCameraAdapter);
         mRecyclerView.setEmptyView(mListEmptyPlaceholder);
-
-        bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
