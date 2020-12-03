@@ -46,7 +46,6 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     private CameraListAdapter mCameraAdapter;
     private List<Camera> mCameraList;
 
-
     // ServiceDaemon binding begins
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -66,15 +65,9 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     // ServiceDaemon binding ends
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
         unbindService(mServiceConnection);
+        super.onDestroy();
     }
 
     int getSpan() {
@@ -118,6 +111,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mCameraAdapter);
         mRecyclerView.setEmptyView(mListEmptyPlaceholder);
+
+        bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
