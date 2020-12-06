@@ -95,9 +95,9 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         sInstance = this;
     }
 
-    public void startPreviewing(SurfaceView surfaceView, int angle) {
+    public void startPreviewing(SurfaceView surfaceView, boolean flip) {
         stopPreviewing();
-        mCurrentSession = SessionBuilder.getInstance().setSurfaceView(surfaceView).setPreviewOrientation(angle).build();
+        mCurrentSession = SessionBuilder.getInstance().setSurfaceView(surfaceView).setPreviewFlip(flip).build();
         mCurrentSession.startPreview();
     }
 
@@ -105,12 +105,7 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         if (mCurrentSession == null) return null;
         return mCurrentSession.getLastPreviewImage();
     }
-
-    public void updateCurrentSessionRotation(int angle) {
-        if (mCurrentSession == null) return;
-        mCurrentSession.setPreviewOrientation(angle);
-    }
-
+    
     public void stopPreviewing() {
         if (mCurrentSession != null) {
             mCurrentSession.stopPreview();

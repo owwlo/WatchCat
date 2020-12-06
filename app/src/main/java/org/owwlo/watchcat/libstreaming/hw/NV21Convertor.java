@@ -106,7 +106,6 @@ public class NV21Convertor {
 	
 	public void convert(byte[] data, ByteBuffer buffer) {
 		byte[] result = convert(data);
-		Log.d(TAG, "result size: " + result.length);
 		int min = buffer.capacity() < data.length?buffer.capacity() : data.length;
 		buffer.put(result, 0, min);
 	}

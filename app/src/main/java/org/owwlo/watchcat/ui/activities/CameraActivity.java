@@ -90,6 +90,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     private SensorManager mSensorManager = null;
 
     private int mLastOrientation = 0;
+    private boolean mLastFlip = false;
 
     private CameraDaemon mCameraDaemon = null;
     private ServiceDaemon mServiceDaemon = null;
@@ -123,36 +124,27 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     };
 
 
-    int getRotation() {
-        int angle = 0;
+    boolean getFlip() {
+        boolean flip = false;
         switch (mLastOrientation) {
-            case Surface.ROTATION_90:
-                angle = 0;
-                break;
             case Surface.ROTATION_180:
-                angle = 180;
-                break;
             case Surface.ROTATION_270:
-                angle = 180;
-                break;
-            default:
-                angle = 90;
+                flip = true;
                 break;
         }
-        return angle;
+        return flip;
     }
 
     private void setPreviewEnable(boolean isEnabled) {
         if (isEnabled) {
-            mCameraDaemon.startPreviewing(mSurfaceView, getRotation());
+            mCameraDaemon.startPreviewing(mSurfaceView, getFlip());
         } else {
             mCameraDaemon.stopPreviewing();
         }
     }
 
     private void restartPreviewing() {
-        setPreviewEnable(false);
-        setPreviewEnable(true);
+        mCameraDaemon.startPreviewing(mSurfaceView, getFlip());
     }
 
     @Override
@@ -241,7 +233,10 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         if (mCameraDaemon != null && rotation != mLastOrientation) {
             Log.d(TAG, "new rotation: " + rotation);
             mLastOrientation = rotation;
-            restartPreviewing();
+            if (mLastFlip != getFlip()) {
+                mLastFlip = getFlip();
+                restartPreviewing();
+            }
         }
     }
 

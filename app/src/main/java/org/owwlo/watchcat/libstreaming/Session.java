@@ -300,16 +300,9 @@ public class Session {
         });
     }
 
-    /**
-     * Sets the orientation of the preview. <br />
-     * You can call this method at any time and changes will take
-     * effect next time you call {@link #configure()}.
-     *
-     * @param orientation The orientation of the preview
-     */
-    public void setPreviewOrientation(int orientation) {
+    public void setFlipImage(boolean flip) {
         if (mVideoStream != null) {
-            mVideoStream.setPreviewOrientation(orientation);
+            mVideoStream.setFlipImage(flip);
         }
     }
 

@@ -65,7 +65,8 @@ public abstract class VideoStream extends MediaStream {
     protected SurfaceView mSurfaceView = null;
     protected SharedPreferences mSettings = null;
     protected int mVideoEncoder, mCameraId = 0;
-    protected int mOrientation = 0;
+
+    protected boolean mFlipImage = false;
     protected Camera mCamera;
     protected Thread mCameraThread;
     protected Looper mCameraLooper;
@@ -78,10 +79,7 @@ public abstract class VideoStream extends MediaStream {
     protected boolean mUpdated = false;
 
     protected String mMimeType;
-    protected String mEncoderName;
-    protected int mEncoderColorFormat;
     protected int mCameraImageFormat;
-    protected int mMaxFps = 0;
     private byte[] mLastPreview = null;
 
     /**
@@ -228,13 +226,8 @@ public abstract class VideoStream extends MediaStream {
         return mFlashEnabled;
     }
 
-    /**
-     * Sets the orientation of the preview.
-     *
-     * @param orientation The orientation of the preview
-     */
-    public void setPreviewOrientation(int orientation) {
-        mOrientation = orientation;
+    public void setFlipImage(boolean flip) {
+        mFlipImage = flip;
         mUpdated = false;
     }
 
@@ -306,10 +299,37 @@ public abstract class VideoStream extends MediaStream {
         }
     }
 
+    // TODO native implementation
+    private static void rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight) {
+        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
+        int i = 0;
+        int count = 0;
+        for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
+            yuv[count] = data[i];
+            count++;
+        }
+        i = imageWidth * imageHeight * 3 / 2 - 1;
+        for (i = imageWidth * imageHeight * 3 / 2 - 1; i >= imageWidth
+                * imageHeight; i -= 2) {
+            yuv[count++] = data[i - 1];
+            yuv[count++] = data[i];
+        }
+        System.arraycopy(yuv, 0, data, 0, Math.min(data.length, yuv.length));
+    }
+
+    private void flipFilter(byte[] data, int imageWidth, int imageHeight) {
+        if (mFlipImage) {
+            rotateYUV420Degree180(data, imageWidth, imageHeight);
+        }
+    }
+
+    private int getCameraOrientation() {
+        if (mFlipImage) return 180;
+        return 0;
+    }
+
     public synchronized void startPreview()
-            throws CameraInUseException,
-            InvalidSurfaceException,
-            RuntimeException {
+            throws RuntimeException {
 
         mCameraOpenedManually = true;
         if (!mPreviewStarted) {
@@ -331,6 +351,7 @@ public abstract class VideoStream extends MediaStream {
         Camera.Parameters parameters = mCamera.getParameters();
         int width = parameters.getPreviewSize().width;
         int height = parameters.getPreviewSize().height;
+        flipFilter(mLastPreview, width, height);
 
         YuvImage yuv = new YuvImage(mLastPreview, parameters.getPreviewFormat(), width, height, null);
 
@@ -355,15 +376,6 @@ public abstract class VideoStream extends MediaStream {
      * Video encoding is done by a MediaCodec.
      */
     protected void encodeWithMediaCodec() throws RuntimeException, IOException {
-        // Uses dequeueInputBuffer to feed the encoder
-        encodeWithMediaCodecMethod1();
-    }
-
-    /**
-     * Video encoding is done by a MediaCodec.
-     */
-    @SuppressLint("NewApi")
-    protected void encodeWithMediaCodecMethod1() throws RuntimeException, IOException {
 
         Log.d(TAG, "Video encoded using the MediaCodec API with a buffer");
 
@@ -397,6 +409,10 @@ public abstract class VideoStream extends MediaStream {
         mMediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
 
+        Camera.Parameters parameters = mCamera.getParameters();
+        final int width = parameters.getPreviewSize().width;
+        final int height = parameters.getPreviewSize().height;
+
         Camera.PreviewCallback callback = new Camera.PreviewCallback() {
             long now = System.nanoTime() / 1000, oldnow = now, i = 0;
             ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
@@ -407,15 +423,17 @@ public abstract class VideoStream extends MediaStream {
                 now = System.nanoTime() / 1000;
                 if (i++ > 3) {
                     i = 0;
-                    //Log.d(TAG,"Measured: "+1000000L/(now-oldnow)+" fps.");
                 }
                 try {
                     int bufferIndex = mMediaCodec.dequeueInputBuffer(500000);
                     if (bufferIndex >= 0) {
                         inputBuffers[bufferIndex].clear();
-                        if (data == null)
+                        if (data == null) {
                             Log.e(TAG, "Symptom of the \"Callback buffer was to small\" problem...");
-                        else convertor.convert(data, inputBuffers[bufferIndex]);
+                        } else {
+                            flipFilter(data, width, height);
+                            convertor.convert(data, inputBuffers[bufferIndex]);
+                        }
                         mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
                     } else {
                         Log.e(TAG, "No buffer available !");
@@ -518,7 +536,7 @@ public abstract class VideoStream extends MediaStream {
                     parameters.setFlashMode(mFlashEnabled ? Parameters.FLASH_MODE_TORCH : Parameters.FLASH_MODE_OFF);
                 }
                 mCamera.setParameters(parameters);
-                mCamera.setDisplayOrientation(mOrientation);
+                mCamera.setDisplayOrientation(getCameraOrientation());
 
                 try {
                     mCamera.setPreviewDisplay(mSurfaceView.getHolder());
@@ -574,7 +592,7 @@ public abstract class VideoStream extends MediaStream {
 
         try {
             mCamera.setParameters(parameters);
-            mCamera.setDisplayOrientation(mOrientation);
+            mCamera.setDisplayOrientation(getCameraOrientation());
             mCamera.startPreview();
             mPreviewStarted = true;
             mUpdated = true;

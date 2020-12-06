@@ -67,7 +67,7 @@ public class SessionBuilder {
     private int mAudioEncoder = AUDIO_NONE;
     private int mCamera = CameraInfo.CAMERA_FACING_BACK;
     private int mTimeToLive = 64;
-    private int mOrientation = 0;
+    private boolean mFlip = false;
     private boolean mFlash = false;
     private SurfaceView mSurfaceView = null;
     private String mOrigin = null;
@@ -135,7 +135,7 @@ public class SessionBuilder {
             video.setFlashState(mFlash);
             video.setVideoQuality(mVideoQuality);
             video.setSurfaceView(mSurfaceView);
-            video.setPreviewOrientation(mOrientation);
+            video.setFlipImage(mFlip);
             video.setDestinationPorts(5006);
         }
 
@@ -229,13 +229,8 @@ public class SessionBuilder {
         return this;
     }
 
-    /**
-     * Sets the orientation of the preview.
-     *
-     * @param orientation The orientation of the preview
-     */
-    public SessionBuilder setPreviewOrientation(int orientation) {
-        mOrientation = orientation;
+    public SessionBuilder setPreviewFlip(boolean flip) {
+        mFlip = flip;
         return this;
     }
 
@@ -330,7 +325,7 @@ public class SessionBuilder {
                 .setDestination(mDestination)
                 .setOrigin(mOrigin)
                 .setSurfaceView(mSurfaceView)
-                .setPreviewOrientation(mOrientation)
+                .setPreviewFlip(mFlip)
                 .setVideoQuality(mVideoQuality)
                 .setVideoEncoder(mVideoEncoder)
                 .setFlashEnabled(mFlash)
