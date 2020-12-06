@@ -87,6 +87,8 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     private View mBtnToggleCamera = null;
     private FloatingActionButton mBtnToggleCameraFab = null;
     private FloatingActionButton mBtnBack = null;
+    private View mStopActionOverlayView = null;
+    private Button mStopActionBtn = null;
     private SensorManager mSensorManager = null;
 
     private int mLastOrientation = 0;
@@ -159,11 +161,17 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         mBtnToggleCamera = findViewById(R.id.camera_start_serving_button);
         mBtnToggleCameraFab = findViewById(R.id.camera_start_serving_button_fab);
         mBtnBack = findViewById(R.id.camera_exit_button);
+        mStopActionOverlayView = findViewById(R.id.stop_overlay);
+        mStopActionBtn = findViewById(R.id.stop_streaming_button);
 
         mBtnSettings.setOnClickListener(this);
         mBtnToggleCamera.setOnClickListener(this);
         mBtnToggleCameraFab.setOnClickListener(this);
         mBtnBack.setOnClickListener(this);
+        mStopActionOverlayView.setOnClickListener(this);
+        mStopActionBtn.setOnClickListener(this);
+
+        mStopActionOverlayView.setVisibility(View.INVISIBLE);
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensorManager.registerListener(this,
@@ -293,6 +301,9 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
                 newFragment.show(getSupportFragmentManager(), null);
                 break;
             }
+            case R.id.stop_streaming_button: {
+                toggleCamera(false);
+            }
         }
     }
 
@@ -326,6 +337,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
     private void toggleCamera(boolean isEnabled) {
         setAllowOrientate(!isEnabled);
+        mStopActionOverlayView.setVisibility(isEnabled ? View.VISIBLE : View.INVISIBLE);
         if (isEnabled) {
             File target = Utils.getPreviewPath();
             Bitmap bmp = mCameraDaemon.getLastPreviewImage();
