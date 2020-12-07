@@ -28,22 +28,12 @@ public class NetworkImageLoader {
                 new ImageLoader(
                         requestQueue,
                         new ImageLoader.ImageCache() {
-                            private final LruCache<String, Bitmap> lruCache =
-                                    new LruCache<String, Bitmap>(maxByteSize) {
-                                        @Override
-                                        protected int sizeOf(String url, Bitmap bitmap) {
-                                            return bitmap.getByteCount();
-                                        }
-                                    };
-
                             @Override
-                            public synchronized Bitmap getBitmap(String url) {
-                                return lruCache.get(url);
+                            public Bitmap getBitmap(String url) {
+                                return null;
                             }
-
                             @Override
-                            public synchronized void putBitmap(String url, Bitmap bitmap) {
-                                lruCache.put(url, bitmap);
+                            public void putBitmap(String url, Bitmap bitmap) {
                             }
                         });
         instance = this;

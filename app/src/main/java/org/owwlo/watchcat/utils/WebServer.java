@@ -5,10 +5,7 @@ import android.util.Log;
 import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.services.CameraDaemon;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -41,15 +38,10 @@ public class WebServer extends NanoHTTPD {
                     info.setStreamingPort(Constants.STREAMING_PORT);
                     info.setEnabled(CameraDaemon.getRunningMode() == CameraDaemon.RUNNING_MODE.STREAMING);
                     return newFixedLengthResponse(Response.Status.OK, "application/json", JsonUtils.toJson(info));
-                }
-                else if (next.equals("get_preview")) {
-                    try {
-                        final File prevFile = Utils.getPreviewPath();
-                        InputStream fileInput = new FileInputStream(prevFile);
-                        return newChunkedResponse(Response.Status.OK, NanoHTTPD.getMimeTypeForFile(prevFile.getPath()), fileInput);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                } else if (next.equals("get_preview")) {
+                    byte[] previewData = CameraDaemon.getPreviewData();
+                    ByteArrayInputStream bs = new ByteArrayInputStream(previewData);
+                    return newChunkedResponse(Response.Status.OK, NanoHTTPD.mimeTypes().get("jpeg"), bs);
                 }
             }
         }

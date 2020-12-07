@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -36,13 +35,6 @@ import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.services.ServiceDaemon;
-import org.owwlo.watchcat.utils.Utils;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 public class CameraActivity extends FragmentActivity implements SurfaceHolder.Callback, View.OnClickListener, SensorEventListener {
     private final static String TAG = CameraActivity.class.getCanonicalName();
@@ -188,7 +180,6 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         Dexter.withContext(this)
                 .withPermissions(
                         Manifest.permission.CAMERA,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.RECORD_AUDIO
                 ).withListener(new PermissionsListener(this, report -> {
             if (report.areAllPermissionsGranted()) {
@@ -339,30 +330,6 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         setAllowOrientate(!isEnabled);
         mStopActionOverlayView.setVisibility(isEnabled ? View.VISIBLE : View.INVISIBLE);
         if (isEnabled) {
-            File target = Utils.getPreviewPath();
-            Bitmap bmp = mCameraDaemon.getLastPreviewImage();
-            BufferedOutputStream bos = null;
-            try {
-                try {
-                    bos = new BufferedOutputStream(new FileOutputStream(target));
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                bmp.compress(Bitmap.CompressFormat.JPEG, 75, bos);
-            } finally {
-                if (bmp != null) {
-                    bmp.recycle();
-                }
-                if (bos != null) {
-                    try {
-                        bos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            Log.d(TAG, "preview saved: " + target.getAbsolutePath());
-
             setPreviewEnable(false);
             mCameraDaemon.startStream();
 

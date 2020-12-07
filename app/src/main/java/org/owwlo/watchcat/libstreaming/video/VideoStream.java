@@ -302,7 +302,7 @@ public abstract class VideoStream extends MediaStream {
     // TODO native implementation
     private static void rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight) {
         byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
-        int i = 0;
+        int i;
         int count = 0;
         for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
             yuv[count] = data[i];
@@ -348,17 +348,19 @@ public abstract class VideoStream extends MediaStream {
     public Bitmap getLastPreviewImage() {
         if (mLastPreview == null) return null;
 
+        byte[] workingBytes = mLastPreview.clone();
+
         Camera.Parameters parameters = mCamera.getParameters();
         int width = parameters.getPreviewSize().width;
         int height = parameters.getPreviewSize().height;
-        flipFilter(mLastPreview, width, height);
-
-        YuvImage yuv = new YuvImage(mLastPreview, parameters.getPreviewFormat(), width, height, null);
+        flipFilter(workingBytes, width, height);
+        YuvImage yuv = new YuvImage(workingBytes, parameters.getPreviewFormat(), width, height, null);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         yuv.compressToJpeg(new Rect(0, 0, width, height), 80, out);
 
         byte[] bytes = out.toByteArray();
+        //TODO no need for this bitmap
         final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
         return bitmap;

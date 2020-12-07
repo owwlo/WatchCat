@@ -9,15 +9,16 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import org.owwlo.watchcat.libstreaming.RtspServer;
 import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
-
+import org.owwlo.watchcat.libstreaming.video.VideoQuality;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Utils;
-import org.owwlo.watchcat.libstreaming.RtspServer;
 
-import org.owwlo.watchcat.libstreaming.video.VideoQuality;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 public class CameraDaemon extends IntentService implements Session.Callback {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
@@ -33,6 +34,7 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     private String mAccessPassword = "";
     // TODO better way to set
     private int mStreamingPort = Constants.STREAMING_PORT;
+    private static byte[] mPreviewData = new byte[0];
 
     public String getAccessPassword() {
         return mAccessPassword;
@@ -101,13 +103,9 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         mCurrentSession.startPreview();
     }
 
-    public Bitmap getLastPreviewImage() {
-        if (mCurrentSession == null) return null;
-        return mCurrentSession.getLastPreviewImage();
-    }
-    
     public void stopPreviewing() {
         if (mCurrentSession != null) {
+            genPreviewIfNeeded();
             mCurrentSession.stopPreview();
             mCurrentSession.stop();
             mCurrentSession.release();
@@ -137,6 +135,26 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     private void logError(final String msg) {
         final String error = (msg == null) ? "Error unknown" : msg;
         Log.e(TAG, error);
+    }
+
+    public static byte[] getPreviewData() {
+        return mPreviewData;
+    }
+
+    private void genPreviewIfNeeded() {
+        if (mCurrentSession == null) return;
+        Bitmap bmp = mCurrentSession.getLastPreviewImage();
+        if (bmp != null) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.JPEG, 75, bos);
+            mPreviewData = bos.toByteArray();
+            bmp.recycle();
+            try {
+                bos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void startStream() {
