@@ -345,7 +345,7 @@ public abstract class VideoStream extends MediaStream {
         mCamera.setPreviewCallback(callback);
     }
 
-    public Bitmap getLastPreviewImage() {
+    public byte[] getLastPreviewImage() {
         if (mLastPreview == null) return null;
 
         byte[] workingBytes = mLastPreview.clone();
@@ -359,11 +359,7 @@ public abstract class VideoStream extends MediaStream {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         yuv.compressToJpeg(new Rect(0, 0, width, height), 80, out);
 
-        byte[] bytes = out.toByteArray();
-        //TODO no need for this bitmap
-        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-        return bitmap;
+        return out.toByteArray();
     }
 
     /**

@@ -777,7 +777,7 @@ public class Session {
             return mVideoStream;
     }
 
-    public Bitmap getLastPreviewImage() {
+    public byte[] getLastPreviewImage() {
         if (mVideoStream != null) return mVideoStream.getLastPreviewImage();
         return null;
     }

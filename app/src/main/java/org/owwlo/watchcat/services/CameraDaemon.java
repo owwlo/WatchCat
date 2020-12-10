@@ -143,17 +143,9 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
     private void genPreviewIfNeeded() {
         if (mCurrentSession == null) return;
-        Bitmap bmp = mCurrentSession.getLastPreviewImage();
-        if (bmp != null) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            bmp.compress(Bitmap.CompressFormat.JPEG, 75, bos);
-            mPreviewData = bos.toByteArray();
-            bmp.recycle();
-            try {
-                bos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        byte[] jpgBytes = mCurrentSession.getLastPreviewImage();
+        if (jpgBytes != null) {
+            mPreviewData = jpgBytes;
         }
     }
 
