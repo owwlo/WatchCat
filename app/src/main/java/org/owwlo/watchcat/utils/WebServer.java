@@ -23,8 +23,9 @@ public class WebServer extends NanoHTTPD {
     @Override
     public Response serve(IHTTPSession session) {
         final Map parms = session.getParameters();
+        final String remoteIp = session.getRemoteIpAddress();
         final Method method = session.getMethod();
-        Log.d(TAG, "uri: " + session.getUri());
+        Log.d(TAG, remoteIp +" requested: " + session.getUri());
         final List<String> uri = Arrays.asList(session.getUri().substring(1).split("/"));
         Iterator<String> iter = uri.iterator();
 

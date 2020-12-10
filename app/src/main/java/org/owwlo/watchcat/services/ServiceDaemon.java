@@ -37,6 +37,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     private NsdHelper nsdHelper = null;
     private RequestQueue mHttpRequestQueue;
     private RemoteCameraManager mCameraManager = null;
+    private String mLocalIpAddress = "";
 
     public static class RemoteCameraManager {
         private final static String TAG = RemoteCameraManager.class.getCanonicalName();
@@ -51,7 +52,6 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         private Runnable mAliveChecker = new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "aliveChecker kicked in!");
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
                         StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(entry.getKey()),
@@ -67,7 +67,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             }
         };
 
-        private RequestQueue mAliveCheckQueue = null;
+        private RequestQueue mAliveCheckQueue;
 
         public RemoteCameraManager(Context context) {
             mAliveCheckQueue = Volley.newRequestQueue(context);
@@ -168,6 +168,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     public void onNsdServiceResolved(NsdService nsdService) {
         String serviceName = nsdService.getName();
         final String ip = nsdService.getHostIp();
+        if (mLocalIpAddress == ip) return;
         if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0 && ip != null) {
             // TODO protocol version check
             String type = nsdService.getType();
@@ -175,7 +176,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
             StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(ip),
                     response -> {
-                        Log.d(TAG, "response: " + response);
+                        Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);
                         mCameraManager.handleCameraInfo(ip, info);
                     }, error -> Log.d(TAG, error.getLocalizedMessage()));
@@ -218,7 +219,12 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         nsdHelper.registerService("org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER, NsdType.HTTP);
         nsdHelper.startDiscovery(NsdType.HTTP);
 
-        Log.d(TAG, "ip: " + Utils.getLocalIPAddress());
+        fetchLocalIp();
+    }
+
+    private void fetchLocalIp() {
+        mLocalIpAddress = Utils.getLocalIPAddress().getHostAddress();
+        Log.d(TAG, "ip: " + mLocalIpAddress);
     }
 
     private void startWebServer() {
@@ -239,6 +245,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     @Override
     public void onDestroy() {
         nsdHelper.unregisterService();
+        nsdHelper.stopDiscovery();
         stopWebServer();
         super.onDestroy();
     }
