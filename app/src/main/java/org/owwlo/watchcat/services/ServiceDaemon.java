@@ -168,6 +168,22 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             }
         }
 
+        public void sendMyInfo(final String targetIp) {
+            CameraDaemon cameraDaemon = CameraDaemon.getInstance();
+            if (cameraDaemon == null) return;
+            CameraInfo info = cameraDaemon.getCameraInfo();
+            final String infoPayload = JsonUtils.toJson(info);
+
+            StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getClientUpdateURI(targetIp),
+                    response -> {
+                    }, error -> {
+                Log.d(TAG, "error occurs from: " + targetIp + " error: " + error);
+            });
+            Log.d(TAG, "sending: " + infoPayload + " to " + targetIp);
+            request.setBody(infoPayload);
+            mRequestQueue.add(request);
+        }
+
         public void broadcastMyInfo() {
             CameraDaemon cameraDaemon = CameraDaemon.getInstance();
             if (cameraDaemon != null) {
@@ -177,14 +193,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                 Log.d(TAG, infoPayload);
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getClientUpdateURI(entry.getKey()),
-                                response -> {
-                                }, error -> {
-                            Log.d(TAG, "error occurs from: " + entry.getKey() + " error: " + error);
-                        });
-                        Log.d(TAG, "sending: " + infoPayload + " to " + entry.getKey());
-                        request.setBody(infoPayload);
-                        mRequestQueue.add(request);
+                        sendMyInfo(entry.getKey());
                     }
                 }
             }
@@ -237,7 +246,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
     @Override
     public void onNsdServiceResolved(NsdService nsdService) {
-        String serviceName = nsdService.getName();
+        final String serviceName = nsdService.getName();
         final String ip = nsdService.getHostIp();
         if (mLocalIpAddress == ip) return;
         if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0 && ip != null) {
@@ -250,6 +259,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                         Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);
                         mCameraManager.handleCameraInfo(ip, info);
+                        mCameraManager.sendMyInfo(ip);
                     }, error -> Log.d(TAG, error.getLocalizedMessage()));
 
             mHttpRequestQueue.add(stringRequest);
