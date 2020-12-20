@@ -13,6 +13,7 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 public class Utils {
@@ -85,8 +86,28 @@ public class Utils {
         return "http://" + ip + ":" + Constants.CONTROL_PORT + "/control/get_info";
     }
 
+    public static String getClientUpdateURI(String ip) {
+        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/client/update_status";
+    }
+
+    public static String getClientShuttingDownURI(String ip) {
+        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/client/remove";
+    }
+
     public static File getPreviewPath() {
         ContextWrapper contextWrapper = new ContextWrapper(sContext);
         return new File(contextWrapper.getExternalFilesDir(null), Constants.PREVIEW_FILENAME);
+    }
+
+    public static <T extends Iterable<String>> String join(String separator, T input) {
+        Iterator itr = input.iterator();
+        StringBuilder sb = new StringBuilder();
+        while (itr.hasNext()) {
+            sb.append(itr.next());
+            if (itr.hasNext()) {
+                sb.append(separator);
+            }
+        }
+        return sb.toString();
     }
 }

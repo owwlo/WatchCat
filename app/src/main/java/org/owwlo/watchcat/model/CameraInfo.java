@@ -5,6 +5,9 @@ import android.os.Parcelable;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
+import org.json.JSONObject;
+import org.owwlo.watchcat.services.ServiceDaemon;
+
 
 public class CameraInfo implements Parcelable {
 
@@ -37,6 +40,10 @@ public class CameraInfo implements Parcelable {
         dest.writeInt(width);
         dest.writeInt(height);
         dest.writeInt(streamingPort);
+    }
+
+    public ServiceDaemon.RUNNING_MODE getRunningMode() {
+        return isEnabled() ? ServiceDaemon.RUNNING_MODE.STREAMING : ServiceDaemon.RUNNING_MODE.STANDING_BY;
     }
 
     @Override

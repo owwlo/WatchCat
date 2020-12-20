@@ -8,6 +8,7 @@ import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -46,6 +47,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     private CameraListAdapter mCameraAdapter;
     private List<Camera> mCameraList;
 
+    private Handler mHandler = new Handler();
+
     // ServiceDaemon binding begins
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -54,11 +57,18 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
             ServiceDaemon.LocalBinder binder = (ServiceDaemon.LocalBinder) service;
             mMainService = binder.getService();
             mMainService.getCameraManager().registerListener(MainScreenActivity.this);
+
+            // Broadcast I am joining the network
+            mMainService.getCameraManager().broadcastMyInfo();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mMainService.getCameraManager().removeListener(MainScreenActivity.this);
+
+            // Broadcast I am leaving the network
+            mMainService.getCameraManager().broadcastShuttingDown();
+
             mMainService = null;
         }
     };
@@ -138,13 +148,20 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
     @Override
     public void onCameraAdded(String ip, CameraInfo info) {
+        if (!info.isEnabled()) return;
         Log.d(TAG, "camera added to the list: " + ip);
         mCameraList.add(new Camera(ip, info.getStreamingPort()));
-        mCameraAdapter.notifyDataSetChanged();
+
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                mCameraAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
-    public void onCameraRmoved(String ip) {
+    public void onCameraRemoved(String ip) {
         int idx = -1;
         for (int i = 0; i < mCameraList.size(); i++) {
             Camera camera = mCameraList.get(i);
@@ -156,9 +173,23 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
         if (idx >= 0) {
             mCameraList.remove(idx);
-            mCameraAdapter.notifyItemRemoved(idx);
-            mCameraAdapter.notifyDataSetChanged();
+            final int cIdx = idx;
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mCameraAdapter.notifyItemRemoved(cIdx);
+                    mCameraAdapter.notifyDataSetChanged();
+                }
+            });
+
         }
+    }
+
+    @Override
+    public void onStateUpdated(String ip, CameraInfo newInfo) {
+        onCameraRemoved(ip);
+        onCameraAdded(ip, newInfo);
+
     }
 
     public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {

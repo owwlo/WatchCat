@@ -2,7 +2,6 @@ package org.owwlo.watchcat.services;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -14,20 +13,14 @@ import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.libstreaming.video.VideoQuality;
+import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Utils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 public class CameraDaemon extends IntentService implements Session.Callback {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
 
-    public enum RUNNING_MODE {
-        STREAMING, STANDING_BY
-    }
-
-    private static RUNNING_MODE mMode = RUNNING_MODE.STANDING_BY;
+    private static ServiceDaemon.RUNNING_MODE mMode = ServiceDaemon.RUNNING_MODE.STANDING_BY;
 
     private static CameraDaemon sInstance = null;
     private Session mCurrentSession = null;
@@ -66,6 +59,19 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
     public CameraDaemon() {
         super("WatchCatDaemon");
+    }
+
+    public CameraInfo getCameraInfo() {
+        CameraInfo info = new CameraInfo();
+
+        // TODO support dynamic resolution
+        info.setWidth(1920);
+        info.setHeight(1080);
+
+        info.setStreamingPort(mStreamingPort);
+        info.setEnabled(mMode == ServiceDaemon.RUNNING_MODE.STREAMING);
+
+        return info;
     }
 
     @Override
@@ -156,16 +162,18 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         intent.putExtra(Constants.RtspServerConstants.INTENT_PASSWORD, mAccessPassword);
         intent.putExtra(Constants.RtspServerConstants.INTENT_PORT, mStreamingPort);
         startService(intent);
-
-        mMode = RUNNING_MODE.STREAMING;
+        updateRunningMode(ServiceDaemon.RUNNING_MODE.STREAMING);
     }
 
     public void stopStream() {
         stopService(new Intent(this, RtspServer.class));
-
-        mMode = RUNNING_MODE.STANDING_BY;
+        updateRunningMode(ServiceDaemon.RUNNING_MODE.STANDING_BY);
     }
 
+    private void updateRunningMode(ServiceDaemon.RUNNING_MODE newMode) {
+        mMode = newMode;
+        ServiceDaemon.getInstance().getCameraManager().broadcastMyInfo();
+    }
 
     @Override
     public void onBitrateUpdate(long bitrate) {
@@ -203,7 +211,7 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
     }
 
-    public static RUNNING_MODE getRunningMode() {
+    public static ServiceDaemon.RUNNING_MODE getRunningMode() {
         return mMode;
     }
 }
