@@ -3,7 +3,6 @@ package org.owwlo.watchcat.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.DisplayMetrics;
-import android.util.LruCache;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
@@ -32,6 +31,7 @@ public class NetworkImageLoader {
                             public Bitmap getBitmap(String url) {
                                 return null;
                             }
+
                             @Override
                             public void putBitmap(String url, Bitmap bitmap) {
                             }

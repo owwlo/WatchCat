@@ -148,7 +148,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                     notifyAdd(ip, info);
                 } else {
                     CameraInfo oldInfo = mCameras.get(ip);
-                    if (oldInfo != info) {
+                    if (!oldInfo.equals(info)) {
                         mCameras.put(ip, info);
                         notifyStateUpdated(ip, info);
                     }
@@ -272,7 +272,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     public void onNsdServiceResolved(NsdService nsdService) {
         final String serviceName = nsdService.getName();
         final String ip = nsdService.getHostIp();
-        if (mLocalIpAddress == ip) return;
+        if (mLocalIpAddress.equals(ip)) return;
         if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0 && ip != null) {
             // TODO protocol version check
             String type = nsdService.getType();

@@ -7,6 +7,8 @@ import com.alibaba.fastjson.annotation.JSONField;
 
 import org.owwlo.watchcat.services.ServiceDaemon;
 
+import java.util.Objects;
+
 
 public class CameraInfo implements Parcelable {
 
@@ -29,6 +31,25 @@ public class CameraInfo implements Parcelable {
     public CameraInfo() {
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled, width, height, streamingPort, controlPort);
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj instanceof CameraInfo) {
+            final CameraInfo other = (CameraInfo) obj;
+            return enabled == other.enabled
+                    && width == other.width
+                    && height == other.height
+                    && streamingPort == other.streamingPort
+                    && controlPort == other.controlPort
+                    ;
+        } else {
+            return false;
+        }
+    }
 
     protected CameraInfo(Parcel in) {
         enabled = (in.readInt() == 1);
