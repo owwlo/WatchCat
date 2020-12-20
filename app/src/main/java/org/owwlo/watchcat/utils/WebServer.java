@@ -62,11 +62,7 @@ public class WebServer extends NanoHTTPD {
             if (iter.hasNext()) {
                 String next = iter.next();
                 if (next.equals("get_info")) {
-                    CameraInfo info = new CameraInfo();
-                    info.setWidth(1920);
-                    info.setHeight(1080);
-                    info.setStreamingPort(Constants.STREAMING_PORT);
-                    info.setEnabled(CameraDaemon.getRunningMode() == ServiceDaemon.RUNNING_MODE.STREAMING);
+                    CameraInfo info = mServiceDaemon.getCameraInfo();
                     return newFixedLengthResponse(Response.Status.OK, NanoHTTPD.mimeTypes().get("json"), JsonUtils.toJson(info));
                 } else if (next.equals("get_preview")) {
                     byte[] previewData = CameraDaemon.getPreviewData();

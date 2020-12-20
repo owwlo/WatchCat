@@ -4,18 +4,20 @@ import android.graphics.Bitmap;
 
 public class Camera {
     private String ip;
-    private int port;
+    private int streamingPort;
+    private int controlPort;
     private Bitmap preview = null;
 
-    public Camera(String ip, int port, Bitmap preview) {
+    public Camera(String ip, int streamingPort, Bitmap preview) {
         this.ip = ip;
-        this.port = port;
+        this.streamingPort = streamingPort;
         this.preview = preview;
     }
 
-    public Camera(String ip, int port) {
+    public Camera(String ip, int streamingPort, int controlPort) {
         this.ip = ip;
-        this.port = port;
+        this.streamingPort = streamingPort;
+        this.controlPort = controlPort;
     }
 
     public String getIp() {
@@ -26,12 +28,16 @@ public class Camera {
         this.ip = ip;
     }
 
-    public int getPort() {
-        return port;
+    public int getStreamingPort() {
+        return streamingPort;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public int getControlPort() {
+        return controlPort;
+    }
+
+    public void setPort(int streamingPort) {
+        this.streamingPort = streamingPort;
     }
 
     public Bitmap getPreview() {

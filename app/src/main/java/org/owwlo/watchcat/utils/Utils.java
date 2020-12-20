@@ -2,15 +2,12 @@ package org.owwlo.watchcat.utils;
 
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.util.Log;
 
 import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -62,18 +59,6 @@ public class Utils {
         return null;
     }
 
-    public static int findAvaiablePort() {
-        ServerSocket socket;
-        try {
-            socket = new ServerSocket(0);
-            return socket.getLocalPort();
-        } catch (IOException e) {
-            Log.e(TAG, "Couldn't assign port to your service.");
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
     public static String getCameraStreamingURI(String ip, int port) {
         return "rtsp://" + ip + ":" + port + "/";
     }
@@ -82,16 +67,16 @@ public class Utils {
         return "http://" + ip + ":" + port + "/control/get_preview";
     }
 
-    public static String getCameraInfoURI(String ip) {
-        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/control/get_info";
+    public static String getCameraInfoURI(final String ip, final int port) {
+        return "http://" + ip + ":" + port + "/control/get_info";
     }
 
-    public static String getClientUpdateURI(String ip) {
-        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/client/update_status";
+    public static String getClientUpdateURI(final String ip, final int port) {
+        return "http://" + ip + ":" + port + "/client/update_status";
     }
 
-    public static String getClientShuttingDownURI(String ip) {
-        return "http://" + ip + ":" + Constants.CONTROL_PORT + "/client/remove";
+    public static String getClientShuttingDownURI(final String ip, final int port) {
+        return "http://" + ip + ":" + port + "/client/remove";
     }
 
     public static File getPreviewPath() {

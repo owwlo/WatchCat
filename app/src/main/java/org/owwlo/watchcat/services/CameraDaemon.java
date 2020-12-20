@@ -13,7 +13,6 @@ import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.libstreaming.video.VideoQuality;
-import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Utils;
 
@@ -59,19 +58,6 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
     public CameraDaemon() {
         super("WatchCatDaemon");
-    }
-
-    public CameraInfo getCameraInfo() {
-        CameraInfo info = new CameraInfo();
-
-        // TODO support dynamic resolution
-        info.setWidth(1920);
-        info.setHeight(1080);
-
-        info.setStreamingPort(mStreamingPort);
-        info.setEnabled(mMode == ServiceDaemon.RUNNING_MODE.STREAMING);
-
-        return info;
     }
 
     @Override
@@ -155,6 +141,10 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         }
     }
 
+    public int getStreamingPort() {
+        return mStreamingPort;
+    }
+    
     public void startStream() {
         // TODO better way to get a port
         Intent intent = new Intent(this, RtspServer.class);

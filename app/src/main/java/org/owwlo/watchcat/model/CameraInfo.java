@@ -5,7 +5,6 @@ import android.os.Parcelable;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-import org.json.JSONObject;
 import org.owwlo.watchcat.services.ServiceDaemon;
 
 
@@ -24,14 +23,19 @@ public class CameraInfo implements Parcelable {
     @JSONField(name = "streamingPort")
     private int streamingPort;
 
+    @JSONField(name = "controlPort")
+    private int controlPort;
+
     public CameraInfo() {
     }
+
 
     protected CameraInfo(Parcel in) {
         enabled = (in.readInt() == 1);
         width = in.readInt();
         height = in.readInt();
         streamingPort = in.readInt();
+        controlPort = in.readInt();
     }
 
     @Override
@@ -40,6 +44,7 @@ public class CameraInfo implements Parcelable {
         dest.writeInt(width);
         dest.writeInt(height);
         dest.writeInt(streamingPort);
+        dest.writeInt(controlPort);
     }
 
     public ServiceDaemon.RUNNING_MODE getRunningMode() {
@@ -93,5 +98,13 @@ public class CameraInfo implements Parcelable {
 
     public void setStreamingPort(int streamingPort) {
         this.streamingPort = streamingPort;
+    }
+
+    public int getControlPort() {
+        return controlPort;
+    }
+
+    public void setControlPort(int controlPort) {
+        this.controlPort = controlPort;
     }
 }

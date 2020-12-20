@@ -15,12 +15,12 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.rafakob.nsdhelper.NsdHelper;
-import com.rafakob.nsdhelper.NsdListener;
-import com.rafakob.nsdhelper.NsdService;
-import com.rafakob.nsdhelper.NsdType;
 
 import org.owwlo.watchcat.model.CameraInfo;
+import org.owwlo.watchcat.nsdhelper.NsdHelper;
+import org.owwlo.watchcat.nsdhelper.NsdListener;
+import org.owwlo.watchcat.nsdhelper.NsdService;
+import org.owwlo.watchcat.nsdhelper.NsdType;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.JsonUtils;
 import org.owwlo.watchcat.utils.StringDetailedRequest;
@@ -40,6 +40,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     private RequestQueue mHttpRequestQueue;
     private RemoteCameraManager mCameraManager = null;
     private String mLocalIpAddress = "";
+    private int mControlPort = 0;
 
     private static ServiceDaemon sInstance = null;
 
@@ -47,8 +48,16 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         STREAMING, STANDING_BY, SHUTTING_DOWN
     }
 
-    public static class RemoteCameraManager {
-        private final static String TAG = RemoteCameraManager.class.getCanonicalName();
+    public interface RemoteCameraEventListener {
+        void onCameraAdded(String ip, CameraInfo info);
+
+        void onCameraRemoved(String ip);
+
+        void onStateUpdated(String ip, CameraInfo newInfo);
+    }
+
+    public class RemoteCameraManager {
+        private final String TAG = RemoteCameraManager.class.getCanonicalName();
 
         public void updateClientStatus(String remoteIp, RUNNING_MODE mode, CameraInfo info) {
             switch (mode) {
@@ -63,21 +72,13 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             }
         }
 
-        public interface RemoteCameraEventListener {
-            void onCameraAdded(String ip, CameraInfo info);
-
-            void onCameraRemoved(String ip);
-
-            void onStateUpdated(String ip, CameraInfo newInfo);
-        }
-
         private Handler handler = new Handler();
         private Runnable mAliveChecker = new Runnable() {
             @Override
             public void run() {
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                        StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(entry.getKey()),
+                        StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(entry.getKey(), entry.getValue().getControlPort()),
                                 response -> {
                                 }, error -> {
                             Log.d(TAG, "error occurs, removing the following ip from the Camera pool: " + entry.getKey());
@@ -147,7 +148,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                     notifyAdd(ip, info);
                 } else {
                     CameraInfo oldInfo = mCameras.get(ip);
-                    if (oldInfo.isEnabled() != info.isEnabled()) {
+                    if (oldInfo != info) {
                         mCameras.put(ip, info);
                         notifyStateUpdated(ip, info);
                     }
@@ -158,7 +159,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         public void broadcastShuttingDown() {
             synchronized (mCameras) {
                 for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                    StringRequest request = new StringRequest(Request.Method.POST, Utils.getClientShuttingDownURI(entry.getKey()),
+                    StringRequest request = new StringRequest(Request.Method.POST, Utils.getClientShuttingDownURI(entry.getKey(), entry.getValue().getControlPort()),
                             response -> {
                             }, error -> {
                         Log.d(TAG, "error occurs from: " + entry.getKey() + " error: " + error);
@@ -168,13 +169,13 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             }
         }
 
-        public void sendMyInfo(final String targetIp) {
+        public void sendMyInfo(final String targetIp, final CameraInfo targetInfo) {
             CameraDaemon cameraDaemon = CameraDaemon.getInstance();
             if (cameraDaemon == null) return;
-            CameraInfo info = cameraDaemon.getCameraInfo();
+            CameraInfo info = getCameraInfo();
             final String infoPayload = JsonUtils.toJson(info);
 
-            StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getClientUpdateURI(targetIp),
+            StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getClientUpdateURI(targetIp, targetInfo.getControlPort()),
                     response -> {
                     }, error -> {
                 Log.d(TAG, "error occurs from: " + targetIp + " error: " + error);
@@ -187,17 +188,33 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         public void broadcastMyInfo() {
             CameraDaemon cameraDaemon = CameraDaemon.getInstance();
             if (cameraDaemon != null) {
-                CameraInfo info = cameraDaemon.getCameraInfo();
+                CameraInfo info = getCameraInfo();
                 final String infoPayload = JsonUtils.toJson(info);
 
                 Log.d(TAG, infoPayload);
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                        sendMyInfo(entry.getKey());
+                        sendMyInfo(entry.getKey(), entry.getValue());
                     }
                 }
             }
         }
+    }
+
+    public CameraInfo getCameraInfo() {
+        CameraInfo info = new CameraInfo();
+        info.setControlPort(ServiceDaemon.getInstance().getControlPort());
+
+        CameraDaemon cameraDaemon = CameraDaemon.getInstance();
+        if (cameraDaemon != null) {
+            info.setStreamingPort(cameraDaemon.getStreamingPort());
+            info.setEnabled(cameraDaemon.getRunningMode() == ServiceDaemon.RUNNING_MODE.STREAMING);
+
+            // TODO support dynamic resolution
+            info.setWidth(1920);
+            info.setHeight(1080);
+        }
+        return info;
     }
 
     public RemoteCameraManager getCameraManager() {
@@ -228,11 +245,18 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         return sInstance;
     }
 
+    public int getControlPort() {
+        return mControlPort;
+    }
+
     @Override
     public void onNsdRegistered(NsdService nsdService) {
-        mServer = new WebServer(Constants.CONTROL_PORT, this);
-        startWebServer();
-        Log.d(TAG, "started service at: " + nsdService.getPort());
+        if (mServer == null || !mServer.isAlive()) {
+            mControlPort = nsdService.getPort();
+            mServer = new WebServer(mControlPort, this);
+            startWebServer();
+            Log.d(TAG, "started service at: " + mControlPort);
+        }
     }
 
     @Override
@@ -252,14 +276,14 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0 && ip != null) {
             // TODO protocol version check
             String type = nsdService.getType();
-            Log.d(TAG, "resolved: " + type + " " + ip);
+            Log.d(TAG, "resolved[REMOTE]: " + type + " " + ip + ":" + nsdService.getPort());
 
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(ip),
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(ip, nsdService.getPort()),
                     response -> {
                         Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);
                         mCameraManager.handleCameraInfo(ip, info);
-                        mCameraManager.sendMyInfo(ip);
+                        mCameraManager.sendMyInfo(ip, info);
                     }, error -> Log.d(TAG, error.getLocalizedMessage()));
 
             mHttpRequestQueue.add(stringRequest);
@@ -289,8 +313,6 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
         mHttpRequestQueue = Volley.newRequestQueue(this);
         mCameraManager = new RemoteCameraManager(this);
-
-        int webServicePort = Utils.findAvaiablePort();
 
         fetchLocalIp();
 

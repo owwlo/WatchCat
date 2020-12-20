@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // FIXME AppCompatActivity will throw annoying exceptions on Android 8
-public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraManager.RemoteCameraEventListener, CameraListAdapter.OnClickListener {
+public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraEventListener, CameraListAdapter.OnClickListener {
     private final static String TAG = MainScreenActivity.class.getCanonicalName();
 
     private View mBtnCameraMode;
@@ -142,7 +142,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     public void onClick(CameraListAdapter.MyViewHolder holder, Camera camera) {
         // ExoPlayer
         Intent intent = new Intent(this, ExoPlayerActivity.class);
-        intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(camera.getIp(), camera.getPort()));
+        intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(camera.getIp(), camera.getStreamingPort()));
         startActivity(intent);
     }
 
@@ -150,7 +150,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     public void onCameraAdded(String ip, CameraInfo info) {
         if (!info.isEnabled()) return;
         Log.d(TAG, "camera added to the list: " + ip);
-        mCameraList.add(new Camera(ip, info.getStreamingPort()));
+        mCameraList.add(new Camera(ip, info.getStreamingPort(), info.getControlPort()));
 
         mHandler.post(new Runnable() {
             @Override

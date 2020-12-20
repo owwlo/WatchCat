@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,7 +12,6 @@ import com.android.volley.toolbox.NetworkImageView;
 
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.model.Camera;
-import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.NetworkImageLoader;
 import org.owwlo.watchcat.utils.Utils;
 
@@ -83,7 +81,7 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
 
         // TODO Or... loading priview using Glide
         // Glide.with(mContext).load(camera.getPreview()).into(holder.preview);
-        NetworkImageLoader.getInstance(CameraListAdapter.this.mContext).setImageFromUrl(holder.preview, Utils.getCameraPreviewURI(camera.getIp(), Constants.CONTROL_PORT));
+        NetworkImageLoader.getInstance(CameraListAdapter.this.mContext).setImageFromUrl(holder.preview, Utils.getCameraPreviewURI(camera.getIp(), camera.getControlPort()));
     }
 
     @Override
