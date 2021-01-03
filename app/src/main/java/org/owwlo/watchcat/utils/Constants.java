@@ -3,7 +3,7 @@ package org.owwlo.watchcat.utils;
 public class Constants {
     public final static int WATCHCAT_API_VER = 1;
 
-    public final static int STREAMING_PORT = 57526;
+    public final static int DEFAULT_STREAMING_PORT = 57526;
     public final static String INTENT_EXTRA_CAMERA_IP = "INTENT_EXTRA_CAMERA_IP";
     public final static String INTENT_EXTRA_CAMERA_PORT = "INTENT_EXTRA_CAMERA_PORT";
     public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 310;

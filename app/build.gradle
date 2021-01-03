@@ -45,6 +45,7 @@ dependencies {
     implementation project(path: ':exoplayer-library-rtsp')
     implementation 'org.jetbrains:annotations:15.0'
     implementation 'com.karumi:dexter:6.2.2'
+    implementation 'com.github.GrenderG:Toasty:1.5.0'
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
@@ -53,4 +54,5 @@ dependencies {
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }

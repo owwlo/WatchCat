@@ -76,7 +76,7 @@ public class RtspServer extends Service {
     public final static int MESSAGE_STREAMING_STOPPED = 0X01;
 
     protected boolean mEnabled = false;
-    protected int mPort = Constants.STREAMING_PORT;
+    protected int mPort = Constants.DEFAULT_STREAMING_PORT;
     protected WeakHashMap<Session, Object> mSessions = new WeakHashMap<>(2);
 
     private RequestListener mListenerThread;

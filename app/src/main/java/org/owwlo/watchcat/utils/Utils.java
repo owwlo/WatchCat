@@ -3,11 +3,15 @@ package org.owwlo.watchcat.utils;
 import android.content.Context;
 import android.content.ContextWrapper;
 
+import com.google.android.exoplayer2.util.Log;
+
 import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -58,6 +62,28 @@ public class Utils {
         }
         return null;
     }
+
+
+    public static int getAvailablePort() {
+        return getAvailablePort(0);
+    }
+
+    public static int getAvailablePort(final int defaultPort) {
+        ServerSocket socket;
+        int port = 0;
+        try {
+            socket = new ServerSocket(0);
+            socket.setReuseAddress(true);
+            port = socket.getLocalPort();
+            socket.close();
+        } catch (IOException e) {
+            Log.d(TAG, "failed to get an available port.");
+            e.printStackTrace();
+            return 0;
+        }
+        return port;
+    }
+
 
     public static String getCameraStreamingURI(String ip, int port) {
         return "rtsp://" + ip + ":" + port + "/";

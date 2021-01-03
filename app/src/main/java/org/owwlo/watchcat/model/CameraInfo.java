@@ -28,12 +28,16 @@ public class CameraInfo implements Parcelable {
     @JSONField(name = "controlPort")
     private int controlPort;
 
+    // TODO implement
+    @JSONField(name = "thumbnailTimestamp")
+    private int thumbnailTimestamp;
+
     public CameraInfo() {
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, width, height, streamingPort, controlPort);
+        return Objects.hash(enabled, width, height, streamingPort, controlPort, thumbnailTimestamp);
     }
 
     @Override
@@ -45,6 +49,7 @@ public class CameraInfo implements Parcelable {
                     && height == other.height
                     && streamingPort == other.streamingPort
                     && controlPort == other.controlPort
+                    && thumbnailTimestamp == other.thumbnailTimestamp
                     ;
         } else {
             return false;
@@ -57,6 +62,7 @@ public class CameraInfo implements Parcelable {
         height = in.readInt();
         streamingPort = in.readInt();
         controlPort = in.readInt();
+        thumbnailTimestamp = in.readInt();
     }
 
     @Override
@@ -66,6 +72,7 @@ public class CameraInfo implements Parcelable {
         dest.writeInt(height);
         dest.writeInt(streamingPort);
         dest.writeInt(controlPort);
+        dest.writeInt(thumbnailTimestamp);
     }
 
     public ServiceDaemon.RUNNING_MODE getRunningMode() {
@@ -127,5 +134,13 @@ public class CameraInfo implements Parcelable {
 
     public void setControlPort(int controlPort) {
         this.controlPort = controlPort;
+    }
+
+    public int getThumbnailTimestamp() {
+        return thumbnailTimestamp;
+    }
+
+    public void setThumbnailTimestamp(int thumbnailTimestamp) {
+        this.thumbnailTimestamp = thumbnailTimestamp;
     }
 }

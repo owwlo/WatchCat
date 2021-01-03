@@ -14,6 +14,7 @@ import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.libstreaming.video.VideoQuality;
 import org.owwlo.watchcat.utils.Constants;
+import org.owwlo.watchcat.utils.Toaster;
 import org.owwlo.watchcat.utils.Utils;
 
 public class CameraDaemon extends IntentService implements Session.Callback {
@@ -24,8 +25,7 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     private static CameraDaemon sInstance = null;
     private Session mCurrentSession = null;
     private String mAccessPassword = "";
-    // TODO better way to set
-    private int mStreamingPort = Constants.STREAMING_PORT;
+    private int mStreamingPort = Constants.DEFAULT_STREAMING_PORT;
     private static byte[] mPreviewData = new byte[0];
 
     public String getAccessPassword() {
@@ -77,7 +77,9 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 //        }
 //        mMediaCodec.configure(mMediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
 
-        Log.d(this.getPackageName(), "ip: " + Utils.getLocalIPAddress());
+        mStreamingPort = Utils.getAvailablePort(Constants.DEFAULT_STREAMING_PORT);
+
+        Toaster.debug.info(this, "CameraDaemon started: " + Utils.getLocalIPAddress() + ":" + mStreamingPort);
 
         // TODO add audio support
         SessionBuilder.getInstance()
@@ -144,13 +146,12 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     public int getStreamingPort() {
         return mStreamingPort;
     }
-    
+
     public void startStream() {
-        // TODO better way to get a port
         Intent intent = new Intent(this, RtspServer.class);
         intent.putExtra(Constants.RtspServerConstants.INTENT_USERNAME, ""); // we use password only
         intent.putExtra(Constants.RtspServerConstants.INTENT_PASSWORD, mAccessPassword);
-        intent.putExtra(Constants.RtspServerConstants.INTENT_PORT, mStreamingPort);
+        intent.putExtra(Constants.RtspServerConstants.INTENT_PORT, getStreamingPort());
         startService(intent);
         updateRunningMode(ServiceDaemon.RUNNING_MODE.STREAMING);
     }
