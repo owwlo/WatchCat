@@ -12,9 +12,9 @@ WatchCat - yet another Android Remote Surveillance Camera app.
 #### TODOs
 * ~~Use [Android ExoPlayer](https://github.com/google/ExoPlayer) to replace libvlc~~
 * ~~tablet optimization~~
-* Password-based Access Control
-* A better GUI?
+* Access Control
 * Logo
+* Optimize resolution selection
 
 ### Limitations
 * The screen will be kept ON during streaming and standing by
@@ -37,3 +37,4 @@ TODO
 * ExoPlayer [https://github.com/google/ExoPlayer](https://github.com/google/ExoPlayer)
 * NanoHttpd [https://github.com/NanoHttpd/nanohttpd](https://github.com/NanoHttpd/nanohttpd)
 * Dexter [https://github.com/Karumi/Dexter](https://github.com/Karumi/Dexter)
+* FloatingActionButtonSpeedDial [https://github.com/leinardi/FloatingActionButtonSpeedDial](https://github.com/leinardi/FloatingActionButtonSpeedDial)
