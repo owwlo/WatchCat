@@ -14,4 +14,6 @@
     <string name="btn_confirm">Apply</string>
     <string name="btn_cancel">Cancel</string>
 
+    <string name="fab_authorization">Access Management</string>
+
 </resources>

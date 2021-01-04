@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 29
@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:15.0'
     implementation 'com.karumi:dexter:6.2.2'
     implementation 'com.github.GrenderG:Toasty:1.5.0'
+    implementation project(path: ':SpeedDial')
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

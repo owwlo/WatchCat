@@ -1,3 +1,4 @@
+include ':SpeedDial'
 rootProject.name='WatchCat'
 include ':app', ':playerlibrary'
 

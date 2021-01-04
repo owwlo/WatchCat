@@ -3,9 +3,11 @@ package org.owwlo.watchcat.ui.activities;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,16 +18,26 @@ import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.IdRes;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.leinardi.android.speeddial.SpeedDialActionItem;
+import com.leinardi.android.speeddial.SpeedDialView;
 
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.model.CameraInfo;
+import org.owwlo.watchcat.model.Viewer;
 import org.owwlo.watchcat.services.ServiceDaemon;
+import org.owwlo.watchcat.ui.AuthorizedClientListAdapter;
 import org.owwlo.watchcat.ui.CameraListAdapter;
 import org.owwlo.watchcat.ui.EmptyRecyclerView;
 import org.owwlo.watchcat.utils.Constants;
@@ -35,11 +47,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 // FIXME AppCompatActivity will throw annoying exceptions on Android 8
-public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraEventListener, CameraListAdapter.OnClickListener {
+public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraEventListener, CameraListAdapter.OnClickListener, SpeedDialView.OnActionSelectedListener, AuthorizedClientListAdapter.OnClickListener {
     private final static String TAG = MainScreenActivity.class.getCanonicalName();
 
     private View mBtnCameraMode;
     private FloatingActionButton mBtnCameraModeFab;
+    private SpeedDialView settingsButton;
     private ServiceDaemon mMainService = null;
 
     private EmptyRecyclerView mRecyclerView;
@@ -122,7 +135,22 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         mRecyclerView.setAdapter(mCameraAdapter);
         mRecyclerView.setEmptyView(mListEmptyPlaceholder);
 
+        settingsButton = findViewById(R.id.settings_menu);
+        settingsButton.addActionItem(getNewMenuFab(R.id.fab_authorization, R.drawable.ic_outline_key, R.string.fab_authorization));
+        settingsButton.setOnActionSelectedListener(this);
+
         bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    SpeedDialActionItem getNewMenuFab(@IdRes int id, @DrawableRes int fabImageResource, @StringRes int labelRes) {
+        return new SpeedDialActionItem.Builder(id, fabImageResource)
+                .setLabel(labelRes)
+                .setLabelColor(Color.WHITE)
+                .setLabelBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.fab_background, getTheme()))
+                .setFabBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.fab_background, getTheme()))
+                .setLabelClickable(true)
+                .setFabSize(FloatingActionButton.SIZE_MINI)
+                .create();
     }
 
     @Override
@@ -144,6 +172,11 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         Intent intent = new Intent(this, ExoPlayerActivity.class);
         intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(camera.getIp(), camera.getStreamingPort()));
         startActivity(intent);
+    }
+
+    @Override
+    public void onClick(AuthorizedClientListAdapter.ViewHolder holder, Viewer viewer) {
+
     }
 
     @Override
@@ -190,6 +223,61 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         onCameraRemoved(ip);
         onCameraAdded(ip, newInfo);
 
+    }
+
+    public class AuthorizationManagementDialog {
+        AlertDialog dialog;
+        private AuthorizedClientListAdapter adapter;
+        private List<Viewer> viewerList;
+
+        public AuthorizationManagementDialog(MainScreenActivity activity) {
+            View view = getLayoutInflater().inflate(R.layout.authorization_view, null);
+            dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.fab_authorization)
+                    .setView(view)
+                    .setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create();
+
+            RecyclerView itemRecyclerList = view.findViewById(R.id.authorization_recycler_view);
+
+            viewerList = new ArrayList<>();
+            adapter = new AuthorizedClientListAdapter(activity, viewerList);
+            adapter.registerListener(MainScreenActivity.this);
+
+            itemRecyclerList.setLayoutManager(new GridLayoutManager(activity, getSpan()));
+            itemRecyclerList.addItemDecoration(new GridSpacingItemDecoration(getSpan(), dpToPx(10), true));
+            itemRecyclerList.setItemAnimator(new DefaultItemAnimator());
+            itemRecyclerList.setAdapter(adapter);
+        }
+
+        public void addFakeData() {
+            for (int i = 0; i < 10; i++) {
+                viewerList.add(new Viewer(Utils.getDeviceId() + "_" + i, "" + i));
+            }
+            adapter.notifyDataSetChanged();
+        }
+
+        public void show() {
+            dialog.show();
+        }
+    }
+
+    @Override
+    public boolean onActionSelected(SpeedDialActionItem actionItem) {
+        final int id = actionItem.getId();
+        switch (id) {
+            case R.id.fab_authorization: {
+                AuthorizationManagementDialog dialog = new AuthorizationManagementDialog(MainScreenActivity.this);
+                dialog.addFakeData();
+                dialog.show();
+                break;
+            }
+        }
+        return false /* close the menu */;
     }
 
     public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {

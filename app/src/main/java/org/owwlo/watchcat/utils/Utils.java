@@ -2,6 +2,8 @@ package org.owwlo.watchcat.utils;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.os.AsyncTask;
+import android.os.Build;
 
 import com.google.android.exoplayer2.util.Log;
 
@@ -13,6 +15,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.regex.Pattern;
@@ -120,5 +123,32 @@ public class Utils {
             }
         }
         return sb.toString();
+    }
+
+    public static String getHostname() {
+        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... voids) {
+                String hostName;
+                try {
+                    InetAddress netHost = InetAddress.getLocalHost();
+                    hostName = netHost.getHostName();
+                } catch (UnknownHostException ex) {
+                    hostName = null;
+                }
+                return hostName;
+            }
+        };
+        task.execute();
+        try {
+            return task.get();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public static String getDeviceId() {
+        return "[" + Build.MANUFACTURER + "]["
+                + Build.MODEL + "]" + " " + getHostname();
     }
 }
