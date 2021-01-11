@@ -1,7 +1,7 @@
 package org.owwlo.watchcat.utils;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.os.AsyncTask;
 import android.os.Build;
 
@@ -9,15 +9,18 @@ import com.google.android.exoplayer2.util.Log;
 
 import org.owwlo.watchcat.services.CameraDaemon;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 public class Utils {
@@ -108,9 +111,12 @@ public class Utils {
         return "http://" + ip + ":" + port + "/client/remove";
     }
 
-    public static File getPreviewPath() {
-        ContextWrapper contextWrapper = new ContextWrapper(sContext);
-        return new File(contextWrapper.getExternalFilesDir(null), Constants.PREVIEW_FILENAME);
+    public static String getAuthAttemptURI(final String ip, final int port) {
+        return "http://" + ip + ":" + port + "/client/auth_request";
+    }
+
+    public static String getPasscodeAuthURI(final String ip, final int port) {
+        return "http://" + ip + ":" + port + "/client/auth";
     }
 
     public static <T extends Iterable<String>> String join(String separator, T input) {
@@ -134,6 +140,7 @@ public class Utils {
                     InetAddress netHost = InetAddress.getLocalHost();
                     hostName = netHost.getHostName();
                 } catch (UnknownHostException ex) {
+                    Log.d(TAG, "failed to get hostname for current device.");
                     hostName = null;
                 }
                 return hostName;
@@ -149,6 +156,52 @@ public class Utils {
 
     public static String getDeviceId() {
         return "[" + Build.MANUFACTURER + "]["
-                + Build.MODEL + "]" + " " + getHostname();
+                + Build.MODEL + "]" + " " + BluetoothAdapter.getDefaultAdapter().getName();
     }
+
+    public static class RandomStringGenerator {
+        public static final String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        public static final String lower = upper.toLowerCase(Locale.ROOT);
+        public static final String digits = "0123456789";
+        public static final String alphaNum = upper + lower + digits;
+        private final Random random;
+        private final char[] symbols;
+        private final char[] buf;
+
+        private static RandomStringGenerator sKeyInstance = null;
+        private static RandomStringGenerator sPasscodeInstance = null;
+
+        public static RandomStringGenerator getKeyInstance() {
+            if (sKeyInstance == null) {
+                sKeyInstance = new RandomStringGenerator(Constants.VIEWER_ID_LENGTH, alphaNum);
+            }
+            return sKeyInstance;
+        }
+
+        public static RandomStringGenerator getPasscodeInstance() {
+            if (sPasscodeInstance == null) {
+                sPasscodeInstance = new RandomStringGenerator(Constants.VIEWER_PASSCODE_LENGTH, digits);
+            }
+            return sPasscodeInstance;
+        }
+
+        public String nextString() {
+            for (int idx = 0; idx < buf.length; ++idx)
+                buf[idx] = symbols[random.nextInt(symbols.length)];
+            return new String(buf);
+        }
+
+        public RandomStringGenerator(int length, Random random, String symbols) {
+            if (length < 1) throw new IllegalArgumentException();
+            if (symbols.length() < 2) throw new IllegalArgumentException();
+            this.random = Objects.requireNonNull(random);
+            this.symbols = symbols.toCharArray();
+            this.buf = new char[length];
+        }
+
+        public RandomStringGenerator(int length, String charPool) {
+            this(length, new SecureRandom(), charPool);
+        }
+    }
+
 }

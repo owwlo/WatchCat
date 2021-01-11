@@ -1,5 +1,6 @@
 package org.owwlo.watchcat.ui.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,37 +19,53 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.andrognito.pinlockview.IndicatorDots;
+import com.andrognito.pinlockview.PinLockListener;
+import com.andrognito.pinlockview.PinLockView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.listener.multi.BaseMultiplePermissionsListener;
 import com.leinardi.android.speeddial.SpeedDialActionItem;
 import com.leinardi.android.speeddial.SpeedDialView;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.owwlo.watchcat.R;
+import org.owwlo.watchcat.model.AuthResult;
 import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.model.Viewer;
+import org.owwlo.watchcat.model.ViewerDao;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.ui.AuthorizedClientListAdapter;
 import org.owwlo.watchcat.ui.CameraListAdapter;
 import org.owwlo.watchcat.ui.EmptyRecyclerView;
 import org.owwlo.watchcat.utils.Constants;
+import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationRequestEvent;
+import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationResultEvent;
+import org.owwlo.watchcat.utils.EventBus.PinInputDoneEvent;
 import org.owwlo.watchcat.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 // FIXME AppCompatActivity will throw annoying exceptions on Android 8
-public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraEventListener, CameraListAdapter.OnClickListener, SpeedDialView.OnActionSelectedListener, AuthorizedClientListAdapter.OnClickListener {
+public class MainScreenActivity extends Activity implements View.OnClickListener, ServiceDaemon.RemoteCameraEventListener, CameraListAdapter.OnClickListener, SpeedDialView.OnActionSelectedListener {
     private final static String TAG = MainScreenActivity.class.getCanonicalName();
 
     private View mBtnCameraMode;
@@ -87,10 +105,100 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     };
     // ServiceDaemon binding ends
 
+    public class PasscodeInputDialog implements PinLockListener {
+        AlertDialog dialog;
+        MainScreenActivity activity;
+        PinLockView pin;
+        TextView description;
+        TextView error;
+        Camera authorizingCamera;
+
+        public PasscodeInputDialog(MainScreenActivity activity) {
+            this.activity = activity;
+            View view = getLayoutInflater().inflate(R.layout.dialog_passcode_input, null);
+            dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded)
+                    .setView(view)
+                    .create();
+            pin = view.findViewById(R.id.pin_input_view);
+            IndicatorDots dots = view.findViewById(R.id.pin_indicator_dots);
+            pin.attachIndicatorDots(dots);
+            pin.setPinLockListener(this);
+
+            pin.setPinLength(4);
+            pin.setTextColor(ContextCompat.getColor(activity, R.color.white));
+            dots.setIndicatorType(IndicatorDots.IndicatorType.FIXED);
+
+            description = view.findViewById(R.id.text_pin_description);
+            error = view.findViewById(R.id.text_passcode_error);
+            error.setVisibility(View.INVISIBLE);
+        }
+
+        public void newInput(final Camera camera) {
+            authorizingCamera = camera;
+            description.setText(camera.getIp());
+            reset(View.INVISIBLE);
+            dialog.show();
+        }
+
+        public void error(final String errorMsg) {
+            error.setText(errorMsg);
+            reset(View.VISIBLE);
+        }
+
+        public void close() {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+        }
+
+        @Override
+        public void onComplete(String passcode) {
+            // TODO this won't fully disable the input
+            pin.setEnabled(false);
+            EventBus.getDefault().post(new PinInputDoneEvent(authorizingCamera, passcode));
+        }
+
+        @Override
+        public void onEmpty() {
+
+        }
+
+        public void reset(final int errorVisibility) {
+            error.setVisibility(errorVisibility);
+            pin.resetPinLockView();
+            pin.setEnabled(true);
+        }
+
+        @Override
+        public void onPinChange(int pinLength, String intermediatePin) {
+
+        }
+    }
+
+    PasscodeInputDialog passcodeInputDialog = null;
+
     @Override
     protected void onDestroy() {
+        EventBus.getDefault().unregister(this);
         unbindService(mServiceConnection);
         super.onDestroy();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
+    public void onMessageEvent(OutgoingAuthorizationResultEvent event) {
+        if (event.getResult() == AuthResult.kRESULT_DENIED) {
+            passcodeInputDialog.error("Access Denied!");
+        } else if (event.getResult() == AuthResult.kRESULT_NEW_AUTH) {
+            passcodeInputDialog.newInput(event.getCamera());
+        } else if (event.getResult() == AuthResult.kRESULT_GRANTED) {
+            passcodeInputDialog.close();
+
+            // ExoPlayer
+            Intent intent = new Intent(this, ExoPlayerActivity.class);
+            // TODO add access code
+            intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(event.getCamera().getIp(), event.getCamera().getStreamingPort()));
+            startActivity(intent);
+        }
     }
 
     int getSpan() {
@@ -109,10 +217,61 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         return (int) (dpWidth / dpItemWidth);
     }
 
+    // TODO extract into a new class
+    public static class PermissionsListener extends BaseMultiplePermissionsListener {
+        public interface CheckCallback {
+            void results(MultiplePermissionsReport report);
+        }
+
+        private final Context context;
+        private final CheckCallback resultsCallback;
+
+        private PermissionsListener(Context context,
+                                    CheckCallback allGrantedCallback) {
+            this.context = context;
+            this.resultsCallback = allGrantedCallback;
+        }
+
+        @Override
+        public void onPermissionsChecked(MultiplePermissionsReport report) {
+            super.onPermissionsChecked(report);
+            if (!report.areAllPermissionsGranted()) {
+                showDialog();
+            }
+            resultsCallback.results(report);
+
+        }
+
+        private void showDialog() {
+            new AlertDialog.Builder(context)
+                    .setTitle("Permissions Require")
+                    .setMessage("Bluetooth permission is needed to get the device ID.")
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        dialog.dismiss();
+                    })
+                    .show();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Dexter.withContext(this)
+                .withPermissions(
+                        Manifest.permission.BLUETOOTH
+                ).withListener(new PermissionsListener(this, report -> {
+            if (report.areAllPermissionsGranted()) {
+                bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+            } else {
+                this.finish();
+            }
+        })).onSameThread().check();
+
+        EventBus.getDefault().register(this);
+
         setContentView(R.layout.activity_main_screen);
+        passcodeInputDialog = new PasscodeInputDialog(this);
 
         mBtnCameraMode = findViewById(R.id.camera_mode_button);
         mBtnCameraModeFab = findViewById(R.id.camera_mode_button_fab);
@@ -138,8 +297,6 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         settingsButton = findViewById(R.id.settings_menu);
         settingsButton.addActionItem(getNewMenuFab(R.id.fab_authorization, R.drawable.ic_outline_key, R.string.fab_authorization));
         settingsButton.setOnActionSelectedListener(this);
-
-        bindService(new Intent(this, ServiceDaemon.class), mServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     SpeedDialActionItem getNewMenuFab(@IdRes int id, @DrawableRes int fabImageResource, @StringRes int labelRes) {
@@ -168,15 +325,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
     @Override
     public void onClick(CameraListAdapter.MyViewHolder holder, Camera camera) {
-        // ExoPlayer
-        Intent intent = new Intent(this, ExoPlayerActivity.class);
-        intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(camera.getIp(), camera.getStreamingPort()));
-        startActivity(intent);
-    }
-
-    @Override
-    public void onClick(AuthorizedClientListAdapter.ViewHolder holder, Viewer viewer) {
-
+        EventBus.getDefault().post(new OutgoingAuthorizationRequestEvent(camera));
     }
 
     @Override
@@ -225,13 +374,14 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
     }
 
-    public class AuthorizationManagementDialog {
+    public class AuthorizationManagementDialog implements AuthorizedClientListAdapter.OnClickListener {
         AlertDialog dialog;
         private AuthorizedClientListAdapter adapter;
         private List<Viewer> viewerList;
+        private ViewerDao viewerDao;
 
         public AuthorizationManagementDialog(MainScreenActivity activity) {
-            View view = getLayoutInflater().inflate(R.layout.authorization_view, null);
+            View view = getLayoutInflater().inflate(R.layout.dialog_authorization_management, null);
             dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.fab_authorization)
                     .setView(view)
                     .setPositiveButton("Done", new DialogInterface.OnClickListener() {
@@ -246,23 +396,41 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
             viewerList = new ArrayList<>();
             adapter = new AuthorizedClientListAdapter(activity, viewerList);
-            adapter.registerListener(MainScreenActivity.this);
+            adapter.registerListener(this);
 
             itemRecyclerList.setLayoutManager(new GridLayoutManager(activity, getSpan()));
             itemRecyclerList.addItemDecoration(new GridSpacingItemDecoration(getSpan(), dpToPx(10), true));
             itemRecyclerList.setItemAnimator(new DefaultItemAnimator());
             itemRecyclerList.setAdapter(adapter);
-        }
 
-        public void addFakeData() {
-            for (int i = 0; i < 10; i++) {
-                viewerList.add(new Viewer(Utils.getDeviceId() + "_" + i, "" + i));
-            }
-            adapter.notifyDataSetChanged();
+            viewerDao = mMainService.getDatabase().viewerDao();
+            AsyncTask<Void, Void, Void> fetchAllViewers = new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    viewerList.addAll(viewerDao.loadClientViewers());
+                    adapter.notifyDataSetChanged();
+                    return null;
+                }
+            };
+            fetchAllViewers.execute();
         }
 
         public void show() {
             dialog.show();
+        }
+
+        @Override
+        public void onClick(AuthorizedClientListAdapter.ViewHolder holder, Viewer viewer) {
+            AsyncTask<Void, Void, Void> revokeAccess = new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    mMainService.getAuthManager().revokeAccess(viewer.getId());
+                    return null;
+                }
+            };
+            revokeAccess.execute();
+            viewerList.remove(viewer);
+            adapter.notifyDataSetChanged();
         }
     }
 
@@ -272,7 +440,6 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         switch (id) {
             case R.id.fab_authorization: {
                 AuthorizationManagementDialog dialog = new AuthorizationManagementDialog(MainScreenActivity.this);
-                dialog.addFakeData();
                 dialog.show();
                 break;
             }

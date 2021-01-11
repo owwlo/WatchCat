@@ -20,7 +20,6 @@ package org.owwlo.watchcat.libstreaming;
 
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
-import android.media.MediaRecorder;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;

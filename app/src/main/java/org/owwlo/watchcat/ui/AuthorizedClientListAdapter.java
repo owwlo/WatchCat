@@ -40,11 +40,11 @@ public class AuthorizedClientListAdapter extends RecyclerView.Adapter<Authorized
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView id;
+        public TextView name;
 
         public ViewHolder(View view) {
             super(view);
-            id = (TextView) view.findViewById(R.id.text_viewer_id);
+            name = (TextView) view.findViewById(R.id.text_viewer_id);
         }
     }
 
@@ -64,13 +64,14 @@ public class AuthorizedClientListAdapter extends RecyclerView.Adapter<Authorized
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         final Viewer viewer = viewerList.get(position);
-        holder.id.setText(viewer.getId());
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                notifyListener(holder, viewer);
-            }
-        });
+        holder.name.setText(viewer.getName());
+        holder.itemView.findViewById(R.id.btn_revoke_access).
+                setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        notifyListener(holder, viewer);
+                    }
+                });
     }
 
     @Override

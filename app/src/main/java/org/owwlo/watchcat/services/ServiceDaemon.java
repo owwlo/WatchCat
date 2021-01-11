@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.room.Room;
 
 import com.alibaba.fastjson.JSON;
 import com.android.volley.Request;
@@ -16,12 +17,24 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+import org.owwlo.watchcat.model.AppDatabase;
+import org.owwlo.watchcat.model.AuthResult;
+import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.model.CameraInfo;
+import org.owwlo.watchcat.model.Viewer;
+import org.owwlo.watchcat.model.ViewerPasscode;
 import org.owwlo.watchcat.nsdhelper.NsdHelper;
 import org.owwlo.watchcat.nsdhelper.NsdListener;
 import org.owwlo.watchcat.nsdhelper.NsdService;
 import org.owwlo.watchcat.nsdhelper.NsdType;
+import org.owwlo.watchcat.utils.AuthManager;
 import org.owwlo.watchcat.utils.Constants;
+import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationRequestEvent;
+import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationResultEvent;
+import org.owwlo.watchcat.utils.EventBus.PinInputDoneEvent;
 import org.owwlo.watchcat.utils.JsonUtils;
 import org.owwlo.watchcat.utils.StringDetailedRequest;
 import org.owwlo.watchcat.utils.Utils;
@@ -41,6 +54,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     private RemoteCameraManager mCameraManager = null;
     private String mLocalIpAddress = "";
     private int mControlPort = 0;
+    private AppDatabase database = null;
+    private AuthManager authManager = null;
 
     private static ServiceDaemon sInstance = null;
 
@@ -93,8 +108,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
         private RequestQueue mRequestQueue;
 
-        public RemoteCameraManager(Context context) {
-            mRequestQueue = Volley.newRequestQueue(context);
+        public RemoteCameraManager(Context context, RequestQueue requestQueue) {
+            mRequestQueue = requestQueue;
             handler.post(mAliveChecker);
         }
 
@@ -268,6 +283,38 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     public void onNsdServiceFound(NsdService nsdService) {
     }
 
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onMessageEvent(OutgoingAuthorizationRequestEvent event) {
+        final Camera camera = event.getCamera();
+        final Viewer myself = authManager.getMyself();
+        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getAuthAttemptURI(camera.getIp(), camera.getControlPort()),
+                response -> {
+                    AuthResult result = JSON.parseObject(response, AuthResult.class);
+                    EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, result.getResult()));
+                }, error -> {
+            EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, AuthResult.kRESULT_DENIED));
+        });
+        request.setBody(JsonUtils.toJson(myself));
+        mHttpRequestQueue.add(request);
+    }
+
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onMessageEvent(PinInputDoneEvent event) {
+        final Camera camera = event.getCamera();
+        final String passcode = event.getPasscode();
+        final Viewer myself = authManager.getMyself();
+        final ViewerPasscode vp = new ViewerPasscode(myself.getId(), passcode);
+        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getPasscodeAuthURI(camera.getIp(), camera.getControlPort()),
+                response -> {
+                    AuthResult result = JSON.parseObject(response, AuthResult.class);
+                    EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, result.getResult()));
+                }, error -> {
+            EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, AuthResult.kRESULT_DENIED));
+        });
+        request.setBody(JsonUtils.toJson(vp));
+        mHttpRequestQueue.add(request);
+    }
+
     @Override
     public void onNsdServiceResolved(NsdService nsdService) {
         final String serviceName = nsdService.getName();
@@ -304,15 +351,21 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         return START_STICKY;
     }
 
-
     @Override
     public void onCreate() {
         super.onCreate();
+        EventBus.getDefault().register(this);
+
+        database = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "watchcat")
+                .enableMultiInstanceInvalidation()
+                .allowMainThreadQueries()
+                .build();
+        authManager = new AuthManager(this);
 
         Utils.sContext = this;
 
         mHttpRequestQueue = Volley.newRequestQueue(this);
-        mCameraManager = new RemoteCameraManager(this);
+        mCameraManager = new RemoteCameraManager(this, mHttpRequestQueue);
 
         fetchLocalIp();
 
@@ -321,6 +374,14 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         nsdHelper.setDiscoveryTimeout(Constants.NSD_TIMEOUT_SECS);
         nsdHelper.registerService("org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER, NsdType.HTTP);
         nsdHelper.startDiscovery(NsdType.HTTP);
+    }
+
+    public AuthManager getAuthManager() {
+        return authManager;
+    }
+
+    public AppDatabase getDatabase() {
+        return database;
     }
 
     private void fetchLocalIp() {
@@ -345,6 +406,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
     @Override
     public void onDestroy() {
+        EventBus.getDefault().unregister(this);
         nsdHelper.unregisterService();
         nsdHelper.stopDiscovery();
         stopWebServer();

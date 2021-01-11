@@ -30,6 +30,9 @@ android {
 }
 
 dependencies {
+    // TODO extract all versions
+    def room_version = "2.2.6"
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -47,6 +50,10 @@ dependencies {
     implementation 'com.karumi:dexter:6.2.2'
     implementation 'com.github.GrenderG:Toasty:1.5.0'
     implementation project(path: ':SpeedDial')
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    implementation 'org.greenrobot:eventbus:3.2.0'
+    implementation project(path: ':pinlockview')
 
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

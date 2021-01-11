@@ -17,5 +17,8 @@ public class Constants {
         public final static String INTENT_PORT = "INTENT_PORT";
     }
 
-    public final static String PREVIEW_FILENAME = "QY7TTVJ7VG7QPHYQXHD3B838Q";
+    public final static int VIEWER_ID_LENGTH = 128;
+    public final static int VIEWER_PASSCODE_LENGTH = 4;
+
+    public final static long VIEWER_AUTH_EXP_MS = 1000 * 60;
 }
