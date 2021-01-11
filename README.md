@@ -38,3 +38,5 @@ TODO
 * NanoHttpd [https://github.com/NanoHttpd/nanohttpd](https://github.com/NanoHttpd/nanohttpd)
 * Dexter [https://github.com/Karumi/Dexter](https://github.com/Karumi/Dexter)
 * FloatingActionButtonSpeedDial [https://github.com/leinardi/FloatingActionButtonSpeedDial](https://github.com/leinardi/FloatingActionButtonSpeedDial)
+* PinLockView [https://github.com/aritraroy/PinLockView](https://github.com/aritraroy/PinLockView)
+* EventBus [https://github.com/greenrobot/EventBus](https://github.com/greenrobot/EventBus)
