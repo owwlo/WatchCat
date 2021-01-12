@@ -170,6 +170,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         mStopActionBtn = findViewById(R.id.stop_streaming_button);
 
         mBtnSettings.setOnClickListener(this);
+        mBtnSettings.setVisibility(View.GONE);
         mBtnToggleCamera.setOnClickListener(this);
         mBtnToggleCameraFab.setOnClickListener(this);
         mBtnBack.setOnClickListener(this);

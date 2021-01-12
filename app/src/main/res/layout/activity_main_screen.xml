@@ -105,7 +105,7 @@
 
     <include
         android:id="@+id/list_empty_placeholder"
-        layout="@layout/list_empty_placeholder" />
+        layout="@layout/placeholder_main_camera_list_empty" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

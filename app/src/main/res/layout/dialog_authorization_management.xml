@@ -1,11 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:fitsSystemWindows="false"
+    tools:context=".ui.activities.MainScreenActivity">
 
-    <androidx.recyclerview.widget.RecyclerView
+    <org.owwlo.watchcat.ui.EmptyRecyclerView
         android:id="@+id/authorization_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="400dp" />
-</LinearLayout>
+        android:layout_height="400dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical" />
+
+    <include
+        android:id="@+id/placeholder_no_access_granted"
+        layout="@layout/placeholder_empty_access_management"
+        android:visibility="gone" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -392,16 +392,17 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
                     })
                     .create();
 
-            RecyclerView itemRecyclerList = view.findViewById(R.id.authorization_recycler_view);
+            EmptyRecyclerView itemRecyclerList = view.findViewById(R.id.authorization_recycler_view);
 
             viewerList = new ArrayList<>();
             adapter = new AuthorizedClientListAdapter(activity, viewerList);
             adapter.registerListener(this);
 
-            itemRecyclerList.setLayoutManager(new GridLayoutManager(activity, getSpan()));
-            itemRecyclerList.addItemDecoration(new GridSpacingItemDecoration(getSpan(), dpToPx(10), true));
+            itemRecyclerList.setLayoutManager(new GridLayoutManager(activity, 1));
+            itemRecyclerList.addItemDecoration(new GridSpacingItemDecoration(1, dpToPx(10), true));
             itemRecyclerList.setItemAnimator(new DefaultItemAnimator());
             itemRecyclerList.setAdapter(adapter);
+            itemRecyclerList.setEmptyView(view.findViewById(R.id.placeholder_no_access_granted));
 
             viewerDao = mMainService.getDatabase().viewerDao();
             AsyncTask<Void, Void, Void> fetchAllViewers = new AsyncTask<Void, Void, Void>() {
