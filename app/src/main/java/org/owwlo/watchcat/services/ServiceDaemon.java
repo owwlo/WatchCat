@@ -93,7 +93,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             public void run() {
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                        StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(entry.getKey(), entry.getValue().getControlPort()),
+                        StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                                Utils.Urls.getTarget(entry.getKey(), entry.getValue().getControlPort()).getCameraInfoURI(),
                                 response -> {
                                 }, error -> {
                             Log.d(TAG, "error occurs, removing the following ip from the Camera pool: " + entry.getKey());
@@ -174,7 +175,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         public void broadcastShuttingDown() {
             synchronized (mCameras) {
                 for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
-                    StringRequest request = new StringRequest(Request.Method.POST, Utils.getClientShuttingDownURI(entry.getKey(), entry.getValue().getControlPort()),
+                    StringRequest request = new StringRequest(Request.Method.POST,
+                            Utils.Urls.getTarget(entry.getKey(), entry.getValue().getControlPort()).getClientShuttingDownURI(),
                             response -> {
                             }, error -> {
                         Log.d(TAG, "error occurs from: " + entry.getKey() + " error: " + error);
@@ -190,7 +192,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             CameraInfo info = getCameraInfo();
             final String infoPayload = JsonUtils.toJson(info);
 
-            StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getClientUpdateURI(targetIp, targetInfo.getControlPort()),
+            StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST,
+                    Utils.Urls.getTarget(targetIp, targetInfo.getControlPort()).getClientUpdateURI(),
                     response -> {
                     }, error -> {
                 Log.d(TAG, "error occurs from: " + targetIp + " error: " + error);
@@ -228,6 +231,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             // TODO support dynamic resolution
             info.setWidth(1920);
             info.setHeight(1080);
+
+            info.setThumbnailTimestamp(cameraDaemon.getPreviewTimestamp());
         }
         return info;
     }
@@ -287,7 +292,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     public void onMessageEvent(OutgoingAuthorizationRequestEvent event) {
         final Camera camera = event.getCamera();
         final Viewer myself = authManager.getMyself();
-        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getAuthAttemptURI(camera.getIp(), camera.getControlPort()),
+        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST,
+                camera.getUrls().getAuthAttemptURI(),
                 response -> {
                     AuthResult result = JSON.parseObject(response, AuthResult.class);
                     EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, result.getResult()));
@@ -304,7 +310,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         final String passcode = event.getPasscode();
         final Viewer myself = authManager.getMyself();
         final ViewerPasscode vp = new ViewerPasscode(myself.getId(), passcode);
-        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST, Utils.getPasscodeAuthURI(camera.getIp(), camera.getControlPort()),
+        StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST,
+                camera.getUrls().getPasscodeAuthURI(),
                 response -> {
                     AuthResult result = JSON.parseObject(response, AuthResult.class);
                     EventBus.getDefault().post(new OutgoingAuthorizationResultEvent(camera, result.getResult()));
@@ -325,7 +332,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             String type = nsdService.getType();
             Log.d(TAG, "resolved[REMOTE]: " + type + " " + ip + ":" + nsdService.getPort());
 
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, Utils.getCameraInfoURI(ip, nsdService.getPort()),
+            StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                    Utils.Urls.getTarget(ip, nsdService.getPort()).getCameraInfoURI(),
                     response -> {
                         Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);

@@ -13,7 +13,6 @@ import com.android.volley.toolbox.NetworkImageView;
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.model.Camera;
 import org.owwlo.watchcat.utils.NetworkImageLoader;
-import org.owwlo.watchcat.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,7 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
     private List<OnClickListener> mListeners = new ArrayList<>();
 
     public interface OnClickListener {
-        public void onClick(MyViewHolder holder, Camera camera);
+        void onClick(MyViewHolder holder, Camera camera);
     }
 
     public void registerListener(OnClickListener listener) {
@@ -79,9 +78,9 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
             }
         });
 
-        // TODO Or... loading priview using Glide
-        // Glide.with(mContext).load(camera.getPreview()).into(holder.preview);
-        NetworkImageLoader.getInstance(CameraListAdapter.this.mContext).setImageFromUrl(holder.preview, Utils.getCameraPreviewURI(camera.getIp(), camera.getControlPort()));
+        NetworkImageLoader.getInstance(CameraListAdapter.this.mContext)
+                .setImageFromUrl(holder.preview,
+                        camera.getUrls().getCameraPreviewURI(camera.getInfo().getThumbnailTimestamp()));
     }
 
     @Override

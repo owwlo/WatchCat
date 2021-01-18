@@ -59,7 +59,6 @@ import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationRequestEvent;
 import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationResultEvent;
 import org.owwlo.watchcat.utils.EventBus.PinInputDoneEvent;
-import org.owwlo.watchcat.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -196,7 +195,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
             // ExoPlayer
             Intent intent = new Intent(this, ExoPlayerActivity.class);
             // TODO add access code
-            intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, Utils.getCameraStreamingURI(event.getCamera().getIp(), event.getCamera().getStreamingPort()));
+            intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, event.getCamera().getUrls().getCameraStreamingURI());
             startActivity(intent);
         }
     }
@@ -332,7 +331,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     public void onCameraAdded(String ip, CameraInfo info) {
         if (!info.isEnabled()) return;
         Log.d(TAG, "camera added to the list: " + ip);
-        mCameraList.add(new Camera(ip, info.getStreamingPort(), info.getControlPort()));
+        mCameraList.add(new Camera(ip, info));
 
         mHandler.post(new Runnable() {
             @Override

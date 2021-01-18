@@ -26,7 +26,8 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     private Session mCurrentSession = null;
     private String mAccessPassword = "";
     private int mStreamingPort = Constants.DEFAULT_STREAMING_PORT;
-    private static byte[] mPreviewData = new byte[0];
+    private static byte[] previewData = new byte[0];
+    private long previewTimestamp = 0;
 
     public String getAccessPassword() {
         return mAccessPassword;
@@ -107,7 +108,6 @@ public class CameraDaemon extends IntentService implements Session.Callback {
         }
     }
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
@@ -132,14 +132,19 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     }
 
     public static byte[] getPreviewData() {
-        return mPreviewData;
+        return previewData;
+    }
+
+    public long getPreviewTimestamp() {
+        return previewTimestamp;
     }
 
     private void genPreviewIfNeeded() {
         if (mCurrentSession == null) return;
         byte[] jpgBytes = mCurrentSession.getLastPreviewImage();
         if (jpgBytes != null) {
-            mPreviewData = jpgBytes;
+            previewData = jpgBytes;
+            previewTimestamp = System.currentTimeMillis();
         }
     }
 

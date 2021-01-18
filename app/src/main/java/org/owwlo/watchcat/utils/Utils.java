@@ -91,32 +91,46 @@ public class Utils {
     }
 
 
-    public static String getCameraStreamingURI(String ip, int port) {
-        return "rtsp://" + ip + ":" + port + "/";
-    }
+    public static class Urls {
+        private final String ip;
+        private final int port;
 
-    public static String getCameraPreviewURI(String ip, int port) {
-        return "http://" + ip + ":" + port + "/control/get_preview";
-    }
+        private Urls(final String ip, final int port) {
+            this.ip = ip;
+            this.port = port;
+        }
 
-    public static String getCameraInfoURI(final String ip, final int port) {
-        return "http://" + ip + ":" + port + "/control/get_info";
-    }
+        public static Urls getTarget(final String ip, final int port) {
+            return new Urls(ip, port);
+        }
 
-    public static String getClientUpdateURI(final String ip, final int port) {
-        return "http://" + ip + ":" + port + "/client/update_status";
-    }
+        public String getCameraStreamingURI() {
+            return "rtsp://" + ip + ":" + port + "/";
+        }
 
-    public static String getClientShuttingDownURI(final String ip, final int port) {
-        return "http://" + ip + ":" + port + "/client/remove";
-    }
+        public String getCameraPreviewURI(final long timestamp) {
+            return "http://" + ip + ":" + port + "/control/get_preview/" + timestamp;
+        }
 
-    public static String getAuthAttemptURI(final String ip, final int port) {
-        return "http://" + ip + ":" + port + "/client/auth_request";
-    }
+        public String getCameraInfoURI() {
+            return "http://" + ip + ":" + port + "/control/get_info";
+        }
 
-    public static String getPasscodeAuthURI(final String ip, final int port) {
-        return "http://" + ip + ":" + port + "/client/auth";
+        public String getClientUpdateURI() {
+            return "http://" + ip + ":" + port + "/client/update_status";
+        }
+
+        public String getClientShuttingDownURI() {
+            return "http://" + ip + ":" + port + "/client/remove";
+        }
+
+        public String getAuthAttemptURI() {
+            return "http://" + ip + ":" + port + "/client/auth_request";
+        }
+
+        public String getPasscodeAuthURI() {
+            return "http://" + ip + ":" + port + "/client/auth";
+        }
     }
 
     public static <T extends Iterable<String>> String join(String separator, T input) {

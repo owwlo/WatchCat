@@ -2,7 +2,7 @@ package org.owwlo.watchcat.utils;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.DisplayMetrics;
+import android.util.LruCache;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
@@ -27,22 +27,31 @@ public class NetworkImageLoader {
                 new ImageLoader(
                         requestQueue,
                         new ImageLoader.ImageCache() {
+                            private LruCache<String, Bitmap> lruCache = new LruCache<String, Bitmap>(maxByteSize) {
+                                @Override
+                                public int sizeOf(String url, Bitmap bitmap) {
+                                    return bitmap.getByteCount();
+                                }
+                            };
+
                             @Override
                             public Bitmap getBitmap(String url) {
-                                return null;
+                                return lruCache.get(url);
                             }
 
                             @Override
                             public void putBitmap(String url, Bitmap bitmap) {
+                                Toaster.debug.info(ctx, "Loaded new image from: " + url);
+                                lruCache.put(url, bitmap);
                             }
                         });
         instance = this;
     }
 
     private static int calculateMaxByteSize() {
-        DisplayMetrics displayMetrics = ctx.getResources().getDisplayMetrics();
-        final int screenBytes = displayMetrics.widthPixels * displayMetrics.heightPixels * 4;
-        return screenBytes * 3;
+        // TODO find a better place for 1920x1080
+        final int screenBytes = 1920 * 1080 * 4;
+        return screenBytes * 5;
     }
 
     public static synchronized NetworkImageLoader getInstance(Context context) {
