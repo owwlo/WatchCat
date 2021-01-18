@@ -192,10 +192,12 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         } else if (event.getResult() == AuthResult.kRESULT_GRANTED) {
             passcodeInputDialog.close();
 
+            final Camera camera = event.getCamera();
+
             // ExoPlayer
             Intent intent = new Intent(this, ExoPlayerActivity.class);
-            // TODO add access code
-            intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI, event.getCamera().getUrls().getCameraStreamingURI());
+            intent.putExtra(ExoPlayerActivity.INTENT_EXTRA_URI,
+                    camera.getUrls().getCameraStreamingURI(mMainService.getAuthManager().getMyself().getId()));
             startActivity(intent);
         }
     }

@@ -26,6 +26,7 @@ import com.google.android.exoplayer2.util.Util;
 import org.owwlo.watchcat.ExoPlayer.BitmapOverlayVideoProcessor;
 import org.owwlo.watchcat.ExoPlayer.VideoProcessingGLSurfaceView;
 import org.owwlo.watchcat.R;
+import org.owwlo.watchcat.utils.Toaster;
 
 public final class ExoPlayerActivity extends Activity {
     public final static String TAG = ExoPlayerActivity.class.getSimpleName();
@@ -108,9 +109,6 @@ public final class ExoPlayerActivity extends Activity {
         Context context = getApplicationContext();
         Intent intent = getIntent();
 
-        // test
-        // intent.putExtra(INTENT_EXTRA_URI, "rtsp://192.168.0.101:57526/");
-
         if ((!intent.hasExtra(INTENT_EXTRA_URI))) {
             Toast.makeText(
                     context, R.string.error_no_stream_selected, Toast.LENGTH_LONG)
@@ -119,6 +117,9 @@ public final class ExoPlayerActivity extends Activity {
         }
 
         Uri uri = Uri.parse(intent.getStringExtra(INTENT_EXTRA_URI));
+
+        Toaster.debug.info(this, "Playing from URI:" + uri);
+
         MediaSource mediaSource = new RtspMediaSource.Factory(RtspDefaultClient.factory()
                 .setFlags(Client.FLAG_ENABLE_RTCP_SUPPORT)
                 .setNatMethod(Client.RTSP_NAT_DUMMY))

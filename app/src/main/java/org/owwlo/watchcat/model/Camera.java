@@ -20,6 +20,6 @@ public class Camera {
     }
 
     public Utils.Urls getUrls() {
-        return Utils.Urls.getTarget(ip, info.getControlPort());
+        return Utils.Urls.getTarget(ip, info.getControlPort(), info.getStreamingPort());
     }
 }

@@ -94,7 +94,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                 synchronized (mCameras) {
                     for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
                         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                                Utils.Urls.getTarget(entry.getKey(), entry.getValue().getControlPort()).getCameraInfoURI(),
+                                Utils.Urls.getControlTarget(entry.getKey(), entry.getValue().getControlPort()).getCameraInfoURI(),
                                 response -> {
                                 }, error -> {
                             Log.d(TAG, "error occurs, removing the following ip from the Camera pool: " + entry.getKey());
@@ -176,7 +176,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             synchronized (mCameras) {
                 for (Map.Entry<String, CameraInfo> entry : mCameras.entrySet()) {
                     StringRequest request = new StringRequest(Request.Method.POST,
-                            Utils.Urls.getTarget(entry.getKey(), entry.getValue().getControlPort()).getClientShuttingDownURI(),
+                            Utils.Urls.getControlTarget(entry.getKey(), entry.getValue().getControlPort()).getClientShuttingDownURI(),
                             response -> {
                             }, error -> {
                         Log.d(TAG, "error occurs from: " + entry.getKey() + " error: " + error);
@@ -193,7 +193,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             final String infoPayload = JsonUtils.toJson(info);
 
             StringDetailedRequest request = new StringDetailedRequest(Request.Method.POST,
-                    Utils.Urls.getTarget(targetIp, targetInfo.getControlPort()).getClientUpdateURI(),
+                    Utils.Urls.getControlTarget(targetIp, targetInfo.getControlPort()).getClientUpdateURI(),
                     response -> {
                     }, error -> {
                 Log.d(TAG, "error occurs from: " + targetIp + " error: " + error);
@@ -333,7 +333,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             Log.d(TAG, "resolved[REMOTE]: " + type + " " + ip + ":" + nsdService.getPort());
 
             StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                    Utils.Urls.getTarget(ip, nsdService.getPort()).getCameraInfoURI(),
+                    Utils.Urls.getControlTarget(ip, nsdService.getPort()).getCameraInfoURI(),
                     response -> {
                         Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);

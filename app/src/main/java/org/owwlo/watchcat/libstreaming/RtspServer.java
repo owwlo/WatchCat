@@ -25,6 +25,8 @@ import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 
+import org.owwlo.watchcat.services.ServiceDaemon;
+import org.owwlo.watchcat.utils.AuthManager;
 import org.owwlo.watchcat.utils.Constants;
 
 import java.io.BufferedReader;
@@ -36,6 +38,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -83,13 +86,6 @@ public class RtspServer extends Service {
     private final IBinder mBinder = new LocalBinder();
     private boolean mRestart = false;
     private final LinkedList<CallbackListener> mListeners = new LinkedList<>();
-
-    /**
-     * Credentials for Basic Auth
-     */
-    private String mUsername;
-    private String mPassword;
-
 
     public RtspServer() {
     }
@@ -143,18 +139,6 @@ public class RtspServer extends Service {
      */
     public int getPort() {
         return mPort;
-    }
-
-
-    /**
-     * Set Basic authorization to access RTSP Stream
-     *
-     * @param username username
-     * @param password password
-     */
-    public void setAuthorization(String username, String password) {
-        mUsername = username;
-        mPassword = password;
     }
 
     /**
@@ -224,7 +208,6 @@ public class RtspServer extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        setAuthorization("", intent.getStringExtra(Constants.RtspServerConstants.INTENT_PASSWORD));
         mPort = intent.getIntExtra(Constants.RtspServerConstants.INTENT_PORT, 0);
         mEnabled = true;
 
@@ -562,17 +545,21 @@ public class RtspServer extends Service {
          */
         private boolean isAuthorized(Request request) {
             String auth = request.headers.get("authorization");
-            if (mUsername == null || mPassword == null || mUsername.isEmpty())
-                return true;
-
-            if (auth != null && !auth.isEmpty()) {
-                String received = auth.substring(auth.lastIndexOf(" ") + 1);
-                String local = mUsername + ":" + mPassword;
-                String localEncoded = Base64.encodeToString(local.getBytes(), Base64.NO_WRAP);
-                if (localEncoded.equals(received))
-                    return true;
+            ServiceDaemon mainService = ServiceDaemon.getInstance();
+            if (mainService == null) {
+                return false;
             }
-
+            AuthManager authManager = mainService.getAuthManager();
+            if (auth != null && !auth.isEmpty()) {
+                final String receivedBase64 = auth.substring(auth.lastIndexOf(" ") + 1);
+                final String decoded = new String(Base64.decode(receivedBase64, Base64.NO_WRAP), StandardCharsets.UTF_8);
+                final String[] splits = decoded.split(":");
+                if (splits.length != 2 || !splits[0].equals(Constants.DEFAULT_RTSP_AUTH_USER)) {
+                    return false;
+                }
+                final String accessCode = splits[1];
+                return authManager.isAccessGranted(accessCode);
+            }
             return false;
         }
     }

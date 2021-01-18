@@ -93,43 +93,49 @@ public class Utils {
 
     public static class Urls {
         private final String ip;
-        private final int port;
+        private final int controlPort;
+        private final int streamingPort;
 
-        private Urls(final String ip, final int port) {
+        private Urls(final String ip, final int controlPort, final int streamingPort) {
             this.ip = ip;
-            this.port = port;
+            this.controlPort = controlPort;
+            this.streamingPort = streamingPort;
         }
 
-        public static Urls getTarget(final String ip, final int port) {
-            return new Urls(ip, port);
+        public static Urls getTarget(final String ip, final int controlPort, final int streamingPort) {
+            return new Urls(ip, controlPort, streamingPort);
         }
 
-        public String getCameraStreamingURI() {
-            return "rtsp://" + ip + ":" + port + "/";
+        public static Urls getControlTarget(final String ip, final int controlPort) {
+            return new Urls(ip, controlPort, 0);
+        }
+
+        public String getCameraStreamingURI(final String accessId) {
+            return "rtsp://" + Constants.DEFAULT_RTSP_AUTH_USER + ":" + accessId + "@" + ip + ":" + streamingPort + "/";
         }
 
         public String getCameraPreviewURI(final long timestamp) {
-            return "http://" + ip + ":" + port + "/control/get_preview/" + timestamp;
+            return "http://" + ip + ":" + controlPort + "/control/get_preview/" + timestamp;
         }
 
         public String getCameraInfoURI() {
-            return "http://" + ip + ":" + port + "/control/get_info";
+            return "http://" + ip + ":" + controlPort + "/control/get_info";
         }
 
         public String getClientUpdateURI() {
-            return "http://" + ip + ":" + port + "/client/update_status";
+            return "http://" + ip + ":" + controlPort + "/client/update_status";
         }
 
         public String getClientShuttingDownURI() {
-            return "http://" + ip + ":" + port + "/client/remove";
+            return "http://" + ip + ":" + controlPort + "/client/remove";
         }
 
         public String getAuthAttemptURI() {
-            return "http://" + ip + ":" + port + "/client/auth_request";
+            return "http://" + ip + ":" + controlPort + "/client/auth_request";
         }
 
         public String getPasscodeAuthURI() {
-            return "http://" + ip + ":" + port + "/client/auth";
+            return "http://" + ip + ":" + controlPort + "/client/auth";
         }
     }
 

@@ -29,14 +29,6 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     private static byte[] previewData = new byte[0];
     private long previewTimestamp = 0;
 
-    public String getAccessPassword() {
-        return mAccessPassword;
-    }
-
-    public void setAccessPassword(String mAccessPassword) {
-        this.mAccessPassword = mAccessPassword;
-    }
-
     // Binding starts
     private final IBinder binder = new LocalBinder();
 
@@ -154,8 +146,6 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
     public void startStream() {
         Intent intent = new Intent(this, RtspServer.class);
-        intent.putExtra(Constants.RtspServerConstants.INTENT_USERNAME, ""); // we use password only
-        intent.putExtra(Constants.RtspServerConstants.INTENT_PASSWORD, mAccessPassword);
         intent.putExtra(Constants.RtspServerConstants.INTENT_PORT, getStreamingPort());
         startService(intent);
         updateRunningMode(ServiceDaemon.RUNNING_MODE.STREAMING);
