@@ -6,7 +6,7 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="appbar_padding_top">8dp</dimen>
     <dimen name="camera_preview_margin">5dp</dimen>
-    <dimen name="camera_preview_radius">0dp</dimen>
+    <dimen name="camera_preview_radius">3dp</dimen>
     <dimen name="camera_preview_cover_height">160dp</dimen>
     <dimen name="camera_preview_title_padding">10dp</dimen>
     <dimen name="camera_preview_title">15dp</dimen>

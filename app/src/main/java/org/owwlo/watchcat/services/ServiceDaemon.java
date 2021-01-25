@@ -222,6 +222,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     public CameraInfo getCameraInfo() {
         CameraInfo info = new CameraInfo();
         info.setControlPort(ServiceDaemon.getInstance().getControlPort());
+        info.setName(Utils.getDeviceId());
 
         CameraDaemon cameraDaemon = CameraDaemon.getInstance();
         if (cameraDaemon != null) {

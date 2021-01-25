@@ -332,47 +332,59 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     @Override
     public void onCameraAdded(String ip, CameraInfo info) {
         if (!info.isEnabled()) return;
-        Log.d(TAG, "camera added to the list: " + ip);
-        mCameraList.add(new Camera(ip, info));
-
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mCameraAdapter.notifyDataSetChanged();
-            }
-        });
+        synchronized (mCameraList) {
+            mCameraList.add(new Camera(ip, info));
+            mHandler.post(() -> mCameraAdapter.notifyItemInserted(mCameraList.size() - 1));
+        }
     }
 
     @Override
     public void onCameraRemoved(String ip) {
-        int idx = -1;
-        for (int i = 0; i < mCameraList.size(); i++) {
-            Camera camera = mCameraList.get(i);
-            if (camera.getIp().equals(ip)) {
-                idx = i;
-                break;
-            }
-        }
-
-        if (idx >= 0) {
-            mCameraList.remove(idx);
-            final int cIdx = idx;
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mCameraAdapter.notifyItemRemoved(cIdx);
-                    mCameraAdapter.notifyDataSetChanged();
+        synchronized (mCameraList) {
+            int idx = -1;
+            for (int i = 0; i < mCameraList.size(); i++) {
+                Camera camera = mCameraList.get(i);
+                if (camera.getIp().equals(ip)) {
+                    idx = i;
+                    break;
                 }
-            });
-
+            }
+            if (idx >= 0) {
+                mCameraList.remove(idx);
+                final int cIdx = idx;
+                mHandler.post(() -> mCameraAdapter.notifyItemRemoved(cIdx));
+            }
         }
     }
 
     @Override
     public void onStateUpdated(String ip, CameraInfo newInfo) {
-        onCameraRemoved(ip);
-        onCameraAdded(ip, newInfo);
-
+        if (!newInfo.isEnabled()) {
+            onCameraRemoved(ip);
+        } else {
+            final Camera camera = new Camera(ip, newInfo);
+            synchronized (mCameraList) {
+                int idx = -1;
+                for (int i = 0; i < mCameraList.size(); i++) {
+                    if (mCameraList.get(i).getIp().equals(ip)) {
+                        idx = i;
+                        break;
+                    }
+                }
+                if (idx >= 0) {
+                    final Camera oldCamera = mCameraList.get(idx);
+                    if (!oldCamera.equals(camera)) {
+                        Log.d(TAG, "old: " + oldCamera.toString() + ", new: " + camera.toString());
+                        mCameraList.set(idx, camera);
+                        final int cIdx = idx;
+                        mHandler.post(() -> mCameraAdapter.notifyItemChanged(cIdx));
+                    }
+                } else {
+                    mCameraList.add(camera);
+                    mHandler.post(() -> mCameraAdapter.notifyItemInserted(mCameraList.size() - 1));
+                }
+            }
+        }
     }
 
     public class AuthorizationManagementDialog implements AuthorizedClientListAdapter.OnClickListener {

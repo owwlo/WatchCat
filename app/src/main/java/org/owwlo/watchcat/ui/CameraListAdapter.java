@@ -44,12 +44,14 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView description;
+        public TextView name;
         public NetworkImageView preview;
 
         public MyViewHolder(View view) {
             super(view);
-            description = (TextView) view.findViewById(R.id.text_camera_description);
-            preview = (NetworkImageView) view.findViewById(R.id.image_camera_preview);
+            name = view.findViewById(R.id.text_camera_card_name);
+            description = view.findViewById(R.id.text_camera_description);
+            preview = view.findViewById(R.id.image_camera_preview);
 
         }
     }
@@ -70,6 +72,7 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
         final Camera camera = cameraList.get(position);
+        holder.name.setText(camera.getInfo().getName());
         holder.description.setText(camera.getIp());
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

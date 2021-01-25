@@ -34,7 +34,7 @@ public class WebServer extends NanoHTTPD {
     private final static String kURL_AUTH_REQUEST = "auth_request";
     private final static String kURL_AUTH = "auth";
 
-    private final static String kMIME_JSON = NanoHTTPD.mimeTypes().get("json");
+    private final static String kMIME_JSON = "application/json; charset=utf-8";
     private final static String kMIME_JPEG = NanoHTTPD.mimeTypes().get("jpeg");
 
     private ServiceDaemon mainService;
@@ -81,7 +81,7 @@ public class WebServer extends NanoHTTPD {
             if (iter.hasNext()) {
                 String next = iter.next();
                 if (next.equals(kURL_GET_INFO)) {
-                    CameraInfo info = mainService.getCameraInfo();
+                    final CameraInfo info = mainService.getCameraInfo();
                     return newFixedLengthResponse(Response.Status.OK, kMIME_JSON, JsonUtils.toJson(info));
                 } else if (next.equals(kURL_GET_PREVIEW)) {
                     byte[] previewData = CameraDaemon.getPreviewData();
