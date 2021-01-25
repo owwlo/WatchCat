@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 import com.alibaba.fastjson.annotation.JSONField;
@@ -31,6 +32,7 @@ public class Viewer implements Parcelable {
         return new Viewer(id, name, false);
     }
 
+    @Ignore
     public Viewer(String id, String name, boolean self) {
         this.id = id;
         this.name = name;
@@ -40,6 +42,7 @@ public class Viewer implements Parcelable {
     public Viewer() {
     }
 
+    @Ignore
     public Viewer(String id, String name) {
         this.id = id;
         this.name = name;
