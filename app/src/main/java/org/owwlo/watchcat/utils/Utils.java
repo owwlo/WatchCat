@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.provider.Settings;
 
 import com.google.android.exoplayer2.util.Log;
 
@@ -16,8 +17,10 @@ import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
@@ -174,9 +177,24 @@ public class Utils {
         }
     }
 
+    private static String getDeviceName() {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (null != bluetoothAdapter) {
+            return bluetoothAdapter.getName();
+        }
+        final List<String> nameKeys = Arrays.asList("bluetooth_name", "device_name", "lock_screen_owner_info");
+        for (final String key : nameKeys) {
+            String pending = Settings.System.getString(sContext.getContentResolver(), key);
+            if (pending != null) return pending;
+            pending = Settings.Secure.getString(sContext.getContentResolver(), key);
+            if (pending != null) return pending;
+        }
+        return "Unknown Device";
+    }
+
     public static String getDeviceId() {
         return "[" + Build.MANUFACTURER + "]["
-                + Build.MODEL + "]" + " " + BluetoothAdapter.getDefaultAdapter().getName();
+                + Build.MODEL + "]" + " " + getDeviceName();
     }
 
     public static class RandomStringGenerator {
