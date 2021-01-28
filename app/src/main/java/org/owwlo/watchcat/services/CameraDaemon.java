@@ -1,12 +1,10 @@
 package org.owwlo.watchcat.services;
 
-import android.app.IntentService;
+import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-
-import androidx.annotation.Nullable;
 
 import org.owwlo.watchcat.libstreaming.RtspServer;
 import org.owwlo.watchcat.libstreaming.Session;
@@ -17,7 +15,7 @@ import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Toaster;
 import org.owwlo.watchcat.utils.Utils;
 
-public class CameraDaemon extends IntentService implements Session.Callback {
+public class CameraDaemon extends Service implements Session.Callback {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
 
     private static ServiceDaemon.RUNNING_MODE mMode = ServiceDaemon.RUNNING_MODE.STANDING_BY;
@@ -50,7 +48,7 @@ public class CameraDaemon extends IntentService implements Session.Callback {
 
 
     public CameraDaemon() {
-        super("WatchCatDaemon");
+        super();
     }
 
     @Override
@@ -110,13 +108,6 @@ public class CameraDaemon extends IntentService implements Session.Callback {
     public void onDestroy() {
         super.onDestroy();
     }
-
-    @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
-        String dataString = intent.getDataString();
-        Log.d(this.getPackageCodePath(), "dataString: " + dataString);
-    }
-
 
     private void logError(final String msg) {
         final String error = (msg == null) ? "Error unknown" : msg;

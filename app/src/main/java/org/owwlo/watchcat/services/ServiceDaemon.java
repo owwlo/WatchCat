@@ -1,14 +1,14 @@
 package org.owwlo.watchcat.services;
 
-import android.app.IntentService;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.Patterns;
 
-import androidx.annotation.Nullable;
 import androidx.room.Room;
 
 import com.alibaba.fastjson.JSON;
@@ -46,7 +46,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ServiceDaemon extends IntentService implements NsdListener {
+public class ServiceDaemon extends Service implements NsdListener {
     private final static String TAG = ServiceDaemon.class.getCanonicalName();
     private WebServer mServer = null;
     private NsdHelper nsdHelper = null;
@@ -58,6 +58,8 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     private AuthManager authManager = null;
 
     private static ServiceDaemon sInstance = null;
+
+    private static String selfServiceName = null;
 
     public enum RUNNING_MODE {
         STREAMING, STANDING_BY, SHUTTING_DOWN
@@ -258,7 +260,7 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     // Binding ends
 
     public ServiceDaemon() {
-        super("ServiceDaemon");
+        super();
         sInstance = this;
     }
 
@@ -276,7 +278,6 @@ public class ServiceDaemon extends IntentService implements NsdListener {
             mControlPort = nsdService.getPort();
             mServer = new WebServer(mControlPort, this);
             startWebServer();
-            Log.d(TAG, "started service at: " + mControlPort);
         }
     }
 
@@ -326,22 +327,26 @@ public class ServiceDaemon extends IntentService implements NsdListener {
     @Override
     public void onNsdServiceResolved(NsdService nsdService) {
         final String serviceName = nsdService.getName();
-        final String ip = nsdService.getHostIp();
-        if (mLocalIpAddress.equals(ip)) return;
-        if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0 && ip != null) {
+        if (selfServiceName.equals(serviceName)) return;
+        if (serviceName.indexOf("org.owwlo.watchcat.camera.") == 0) {
+            final String[] serviceNameSplits = serviceName.split(":");
+            if (serviceNameSplits.length < 2 || !Patterns.IP_ADDRESS.matcher(serviceNameSplits[1]).matches()) {
+                return;
+            }
+            // nsdService.getHostIp() is not reliable here if the device comes with >1 NICs
+            final String ip = serviceNameSplits[1];
             // TODO protocol version check
             String type = nsdService.getType();
             Log.d(TAG, "resolved[REMOTE]: " + type + " " + ip + ":" + nsdService.getPort());
-
+            final String url = Utils.Urls.getControlTarget(ip, nsdService.getPort()).getCameraInfoURI();
             StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                    Utils.Urls.getControlTarget(ip, nsdService.getPort()).getCameraInfoURI(),
+                    url,
                     response -> {
                         Log.d(TAG, ip + " response: " + response);
                         CameraInfo info = JSON.parseObject(response, CameraInfo.class);
                         mCameraManager.handleCameraInfo(ip, info);
                         mCameraManager.sendMyInfo(ip, info);
-                    }, error -> Log.d(TAG, error.getLocalizedMessage()));
-
+                    }, error -> Log.d(TAG, "error requesting " + url + ", err: " + error.toString()));
             mHttpRequestQueue.add(stringRequest);
         }
     }
@@ -356,13 +361,14 @@ public class ServiceDaemon extends IntentService implements NsdListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags, startId);
         return START_STICKY;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        Utils.sContext = this;
+
         EventBus.getDefault().register(this);
 
         database = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "watchcat")
@@ -371,17 +377,19 @@ public class ServiceDaemon extends IntentService implements NsdListener {
                 .build();
         authManager = new AuthManager(this);
 
-        Utils.sContext = this;
-
         mHttpRequestQueue = Volley.newRequestQueue(this);
         mCameraManager = new RemoteCameraManager(this, mHttpRequestQueue);
 
-        fetchLocalIp();
+        initLocalIp();
+        initServiceName();
+        initNsdService();
+    }
 
+    private void initNsdService() {
         nsdHelper = new NsdHelper(this, this);
         nsdHelper.setAutoResolveEnabled(true);
         nsdHelper.setDiscoveryTimeout(Constants.NSD_TIMEOUT_SECS);
-        nsdHelper.registerService("org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER, NsdType.HTTP);
+        nsdHelper.registerService(selfServiceName, NsdType.HTTP);
         nsdHelper.startDiscovery(NsdType.HTTP);
     }
 
@@ -393,9 +401,13 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         return database;
     }
 
-    private void fetchLocalIp() {
+    private void initLocalIp() {
         mLocalIpAddress = Utils.getLocalIPAddress().getHostAddress();
-        Log.d(TAG, "ip: " + mLocalIpAddress);
+        Log.d(TAG, "Device IP: " + mLocalIpAddress);
+    }
+
+    private void initServiceName() {
+        selfServiceName = "org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER + "." + System.currentTimeMillis() + ":" + mLocalIpAddress;
     }
 
     private void startWebServer() {
@@ -421,12 +433,4 @@ public class ServiceDaemon extends IntentService implements NsdListener {
         stopWebServer();
         super.onDestroy();
     }
-
-
-    @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
-        String dataString = intent.getDataString();
-        Log.d(this.getPackageCodePath(), "dataString: " + dataString);
-    }
-
 }
