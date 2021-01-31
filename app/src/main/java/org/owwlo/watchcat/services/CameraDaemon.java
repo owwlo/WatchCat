@@ -2,6 +2,7 @@ package org.owwlo.watchcat.services;
 
 import android.app.Service;
 import android.content.Intent;
+import android.media.CamcorderProfile;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -10,10 +11,13 @@ import org.owwlo.watchcat.libstreaming.RtspServer;
 import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
-import org.owwlo.watchcat.libstreaming.video.VideoQuality;
 import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.Toaster;
 import org.owwlo.watchcat.utils.Utils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CameraDaemon extends Service implements Session.Callback {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
@@ -51,35 +55,54 @@ public class CameraDaemon extends Service implements Session.Callback {
         super();
     }
 
+    public class CameraParams {
+        private final String TAG = CameraParams.class.getCanonicalName();
+
+        final List<Integer> awesomeProfiles = Arrays.asList(CamcorderProfile.QUALITY_1080P, CamcorderProfile.QUALITY_720P, CamcorderProfile.QUALITY_480P, CamcorderProfile.QUALITY_LOW);
+        List<Integer> supportedProfiles = new ArrayList<>();
+        Integer selectedProfile = CamcorderProfile.QUALITY_LOW;
+
+        public CameraParams() {
+            for (Integer profile : awesomeProfiles) {
+                if (CamcorderProfile.hasProfile(profile)) {
+                    supportedProfiles.add(profile);
+                }
+            }
+            if (!supportedProfiles.isEmpty()) {
+                selectedProfile = supportedProfiles.get(0);
+            }
+        }
+
+        public CamcorderProfile getSelectedProfile() {
+            return CamcorderProfile.get(selectedProfile);
+        }
+    }
+
+    CameraParams cameraParams = null;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        // TODO dynamically select 720p or 1080p
-//        MediaFormat mMediaFormat = MediaFormat.createVideoFormat("video/avc", 1920, 1080);
-//        mMediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-//        mMediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
-//        mMediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-//        mMediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
-//        MediaCodec mMediaCodec = null;
-//        try {
-//            mMediaCodec = MediaCodec.createEncoderByType("video/avc");
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        mMediaCodec.configure(mMediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
 
         mStreamingPort = Utils.getAvailablePort(Constants.DEFAULT_STREAMING_PORT);
 
         Toaster.debug.info(this, "CameraDaemon started: " + Utils.getLocalIPAddress() + ":" + mStreamingPort);
+
+        cameraParams = new CameraParams();
+        CamcorderProfile selectedProfile = cameraParams.getSelectedProfile();
 
         // TODO add audio support
         SessionBuilder.getInstance()
                 .setCallback(this)
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_NONE)
-                .setVideoEncoder(SessionBuilder.VIDEO_H264)
-                .setVideoQuality(new VideoQuality(1920, 1080, 30, 1500000));
+                .setVideoEncoder(SessionBuilder.VIDEO_H264);
+        
         sInstance = this;
+    }
+
+    public CameraParams getCameraParams() {
+        return cameraParams;
     }
 
     public void startPreviewing(SurfaceView surfaceView, boolean flip) {
@@ -161,8 +184,8 @@ public class CameraDaemon extends Service implements Session.Callback {
     public void onSessionError(int reason, int streamType, Exception e) {
         if (e != null) {
             logError(e.getMessage());
+            e.printStackTrace();
         }
-
     }
 
     @Override

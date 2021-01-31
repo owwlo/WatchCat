@@ -25,18 +25,10 @@ import android.util.Log;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * A class that represents the quality of a video stream.
- * It contains the resolution, the framerate (in fps) and the bitrate (in bps) of the stream.
- */
+// TODO delete this class
 public class VideoQuality {
 
     public final static String TAG = "VideoQuality";
-
-    /**
-     * Default video stream quality.
-     */
-    public final static VideoQuality DEFAULT_VIDEO_QUALITY = new VideoQuality(1920, 1080, 30, 500000);
 
     /**
      * Represents a quality for a video stream.
@@ -68,21 +60,6 @@ public class VideoQuality {
 
     public VideoQuality clone() {
         return new VideoQuality(resX, resY, framerate, bitrate);
-    }
-
-    public static VideoQuality parseQuality(String str) {
-        VideoQuality quality = DEFAULT_VIDEO_QUALITY.clone();
-        if (str != null) {
-            String[] config = str.split("-");
-            try {
-                quality.bitrate = Integer.parseInt(config[0]) * 1000; // conversion to bit/s
-                quality.framerate = Integer.parseInt(config[1]);
-                quality.resX = Integer.parseInt(config[2]);
-                quality.resY = Integer.parseInt(config[3]);
-            } catch (IndexOutOfBoundsException ignore) {
-            }
-        }
-        return quality;
     }
 
     public String toString() {

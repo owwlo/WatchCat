@@ -20,9 +20,6 @@ package org.owwlo.watchcat.libstreaming.video;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
@@ -44,13 +41,12 @@ import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.libstreaming.hw.EncoderDebugger;
 import org.owwlo.watchcat.libstreaming.hw.NV21Convertor;
 import org.owwlo.watchcat.libstreaming.rtp.MediaCodecInputStream;
+import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Don't use this class directly.
@@ -59,8 +55,6 @@ public abstract class VideoStream extends MediaStream {
 
     protected final static String TAG = "VideoStream";
 
-    protected VideoQuality mRequestedQuality = VideoQuality.DEFAULT_VIDEO_QUALITY.clone();
-    protected VideoQuality mQuality = mRequestedQuality.clone();
     protected SurfaceHolder.Callback mSurfaceHolderCallback = null;
     protected SurfaceView mSurfaceView = null;
     protected SharedPreferences mSettings = null;
@@ -232,26 +226,6 @@ public abstract class VideoStream extends MediaStream {
     }
 
     /**
-     * Sets the configuration of the stream. You can call this method at any time
-     * and changes will take effect next time you call {@link #configure()}.
-     *
-     * @param videoQuality Quality of the stream
-     */
-    public void setVideoQuality(VideoQuality videoQuality) {
-        if (!mRequestedQuality.equals(videoQuality)) {
-            mRequestedQuality = videoQuality.clone();
-            mUpdated = false;
-        }
-    }
-
-    /**
-     * Returns the quality of the stream.
-     */
-    public VideoQuality getVideoQuality() {
-        return mRequestedQuality;
-    }
-
-    /**
      * Some data (SPS and PPS params) needs to be stored when {@link #getSessionDescription()} is called
      *
      * @param prefs The SharedPreferences that will be used to save SPS and PPS parameters
@@ -276,7 +250,6 @@ public abstract class VideoStream extends MediaStream {
     public synchronized void start() throws IllegalStateException, IOException {
         if (!mPreviewStarted) mCameraOpenedManually = false;
         super.start();
-        Log.d(TAG, "Stream configuration: FPS: " + mQuality.framerate + " Width: " + mQuality.resX + " Height: " + mQuality.resY);
     }
 
     /**
@@ -330,7 +303,6 @@ public abstract class VideoStream extends MediaStream {
 
     public synchronized void startPreview()
             throws RuntimeException {
-
         mCameraOpenedManually = true;
         if (!mPreviewStarted) {
             createCamera();
@@ -374,15 +346,13 @@ public abstract class VideoStream extends MediaStream {
      * Video encoding is done by a MediaCodec.
      */
     protected void encodeWithMediaCodec() throws RuntimeException, IOException {
-
         Log.d(TAG, "Video encoded using the MediaCodec API with a buffer");
 
-        // Updates the parameters of the camera if needed
         createCamera();
         updateCamera();
 
-        // Estimates the frame rate of the camera
-        measureFramerate();
+        // TODO Estimates the frame rate of the camera
+        // measureFramerate();
 
         // Starts the preview if needed
         if (!mPreviewStarted) {
@@ -395,13 +365,15 @@ public abstract class VideoStream extends MediaStream {
             }
         }
 
-        EncoderDebugger debugger = EncoderDebugger.debug(mSettings, mQuality.resX, mQuality.resY);
-        final NV21Convertor convertor = debugger.getNV21Convertor();
+        CamcorderProfile selectedProfile = CameraDaemon.getInstance().getCameraParams().getSelectedProfile();
+
+        EncoderDebugger debugger = EncoderDebugger.debug(mSettings, selectedProfile.videoFrameWidth, selectedProfile.videoFrameHeight);
+        final NV21Convertor converter = debugger.getNV21Convertor();
 
         mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat("video/avc", mQuality.resX, mQuality.resY);
+        MediaFormat mediaFormat = MediaFormat.createVideoFormat("video/avc", selectedProfile.videoFrameWidth, selectedProfile.videoFrameHeight);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 2 * 1000 * 1000);
-        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mQuality.framerate);
+        mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, selectedProfile.videoFrameRate);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, debugger.getEncoderColorFormat());
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
         mMediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
@@ -430,7 +402,7 @@ public abstract class VideoStream extends MediaStream {
                             Log.e(TAG, "Symptom of the \"Callback buffer was to small\" problem...");
                         } else {
                             flipFilter(data, width, height);
-                            convertor.convert(data, inputBuffers[bufferIndex]);
+                            converter.convert(data, inputBuffers[bufferIndex]);
                         }
                         mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
                     } else {
@@ -442,7 +414,7 @@ public abstract class VideoStream extends MediaStream {
             }
         };
 
-        for (int i = 0; i < 10; i++) mCamera.addCallbackBuffer(new byte[convertor.getBufferSize()]);
+        for (int i = 0; i < 10; i++) mCamera.addCallbackBuffer(new byte[converter.getBufferSize()]);
         mCamera.setPreviewCallbackWithBuffer(callback);
 
         // The packetizer encapsulates the bit stream in an RTP stream and send it over the network
@@ -522,10 +494,7 @@ public abstract class VideoStream extends MediaStream {
                 // setRecordingHint(true) is a very nice optimization if you plane to only use the Camera for recording
                 Parameters parameters = mCamera.getParameters();
 
-                CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P);
-                List<Camera.Size> mSupportedVideoSizes = parameters.getSupportedVideoSizes();
-                Camera.Size optimalSize = CameraHelper.getOptimalVideoSize(mSupportedVideoSizes,
-                        mSupportedVideoSizes, profile.videoFrameWidth, profile.videoFrameHeight);
+                CamcorderProfile profile = CameraDaemon.getInstance().getCameraParams().getSelectedProfile();
 
                 // likewise for the camera object itself.
                 parameters.setPreviewSize(profile.videoFrameWidth, profile.videoFrameHeight);
@@ -577,16 +546,20 @@ public abstract class VideoStream extends MediaStream {
             mCamera.stopPreview();
         }
 
-        Parameters parameters = mCamera.getParameters();
-        mQuality = VideoQuality.determineClosestSupportedResolution(parameters, mQuality);
-        int[] max = VideoQuality.determineMaximumSupportedFramerate(parameters);
+        CamcorderProfile selectedProfile = CameraDaemon.getInstance().getCameraParams().getSelectedProfile();
 
-        double ratio = (double) mQuality.resX / (double) mQuality.resY;
+        Parameters parameters = mCamera.getParameters();
+
+        double ratio = (double) selectedProfile.videoFrameWidth / (double) selectedProfile.videoFrameHeight;
         mSurfaceView.requestAspectRatio(ratio);
 
         parameters.setPreviewFormat(mCameraImageFormat);
-        parameters.setPreviewSize(mQuality.resX, mQuality.resY);
-        parameters.setPreviewFpsRange(max[0], max[1]);
+        parameters.setPreviewSize(selectedProfile.videoFrameWidth, selectedProfile.videoFrameHeight);
+
+        Log.d(TAG, "framerate: " + selectedProfile.videoFrameRate);
+
+        // TODO frame rate range
+        parameters.setPreviewFpsRange(selectedProfile.videoFrameRate * 1000, selectedProfile.videoFrameRate * 1000);
 
         try {
             mCamera.setParameters(parameters);
@@ -630,44 +603,41 @@ public abstract class VideoStream extends MediaStream {
      * We will then use this average frame rate with the MediaCodec.
      * Blocks the thread in which this function is called.
      */
-    private void measureFramerate() {
-        final Semaphore lock = new Semaphore(0);
-
-        final Camera.PreviewCallback callback = new Camera.PreviewCallback() {
-            int i = 0, t = 0;
-            long now, oldnow, count = 0;
-
-            @Override
-            public void onPreviewFrame(byte[] data, Camera camera) {
-                i++;
-                now = System.nanoTime() / 1000;
-                if (i > 3) {
-                    t += now - oldnow;
-                    count++;
-                }
-                if (i > 20) {
-                    mQuality.framerate = (int) (1000000 / (t / count) + 1);
-                    lock.release();
-                }
-                oldnow = now;
-            }
-        };
-
-        mCamera.setPreviewCallback(callback);
-
-        try {
-            lock.tryAcquire(2, TimeUnit.SECONDS);
-            Log.d(TAG, "Actual framerate: " + mQuality.framerate);
-            if (mSettings != null) {
-                Editor editor = mSettings.edit();
-                editor.putInt(PREF_PREFIX + "fps" + mRequestedQuality.framerate + "," + mCameraImageFormat + "," + mRequestedQuality.resX + mRequestedQuality.resY, mQuality.framerate);
-                editor.commit();
-            }
-        } catch (InterruptedException e) {
-        }
-
-        mCamera.setPreviewCallback(null);
-
-    }
-
+//    private void measureFramerate() {
+//        final Semaphore lock = new Semaphore(0);
+//        final CamcorderProfile selectedProfile = CameraDaemon.getInstance().getCameraParams().getSelectedProfile();
+//        final Camera.PreviewCallback callback = new Camera.PreviewCallback() {
+//            int i = 0, t = 0;
+//            long now, oldnow, count = 0;
+//
+//            @Override
+//            public void onPreviewFrame(byte[] data, Camera camera) {
+//                i++;
+//                now = System.nanoTime() / 1000;
+//                if (i > 3) {
+//                    t += now - oldnow;
+//                    count++;
+//                }
+//                if (i > 20) {
+//                    mQuality.framerate = (int) (1000000 / (t / count) + 1);
+//                    lock.release();
+//                }
+//                oldnow = now;
+//            }
+//        };
+//
+//        mCamera.setPreviewCallback(callback);
+//
+//        try {
+//            lock.tryAcquire(2, TimeUnit.SECONDS);
+//            Log.d(TAG, "Actual framerate: " + mQuality.framerate);
+//            if (mSettings != null) {
+//                Editor editor = mSettings.edit();
+//                editor.putInt(PREF_PREFIX + "fps" + mRequestedQuality.framerate + "," + mCameraImageFormat + "," + mRequestedQuality.resX + mRequestedQuality.resY, mQuality.framerate);
+//                editor.commit();
+//            }
+//        } catch (InterruptedException e) {
+//        }
+//        mCamera.setPreviewCallback(null);
+//    }
 }

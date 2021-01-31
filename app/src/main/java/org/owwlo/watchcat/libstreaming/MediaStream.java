@@ -20,11 +20,6 @@ package org.owwlo.watchcat.libstreaming;
 
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
-import android.net.LocalServerSocket;
-import android.net.LocalSocket;
-import android.net.LocalSocketAddress;
-import android.os.Build;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import org.owwlo.watchcat.libstreaming.audio.AudioStream;
@@ -34,7 +29,6 @@ import org.owwlo.watchcat.libstreaming.video.VideoStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
-import java.util.Random;
 
 /**
  * A MediaRecorder that streams what it records using a packetizer from the RTP package.
@@ -45,31 +39,9 @@ public abstract class MediaStream implements Stream {
     protected static final String TAG = "MediaStream";
 
     /**
-     * A LocalSocket will be used to feed the MediaRecorder object
-     */
-    public static final byte PIPE_API_LS = 0x01;
-
-    /**
-     * A ParcelFileDescriptor will be used to feed the MediaRecorder object
-     */
-    public static final byte PIPE_API_PFD = 0x02;
-
-    /**
-     * Prefix that will be used for all shared preferences saved by libstreaming
-     */
-    protected static final String PREF_PREFIX = "libstreaming-";
-
-    /**
      * The packetizer that will read the output of the camera and send RTP packets over the networked.
      */
     protected AbstractPacketizer mPacketizer = null;
-
-    /**
-     * Starting lollipop the LocalSocket API cannot be used to feed a MediaRecorder object.
-     * You can force what API to use to create the pipe that feeds it with this constant
-     * by using  {@link #PIPE_API_LS} and {@link #PIPE_API_PFD}.
-     */
-    protected final static byte sPipeApi;
 
     protected boolean mStreaming = false, mConfigured = false;
     protected int mRtpPort = 0, mRtcpPort = 0;
@@ -77,34 +49,17 @@ public abstract class MediaStream implements Stream {
     protected OutputStream mOutputStream = null;
     protected InetAddress mDestination;
 
-    protected ParcelFileDescriptor[] mParcelFileDescriptors;
-    protected ParcelFileDescriptor mParcelRead;
-    protected ParcelFileDescriptor mParcelWrite;
-
-    protected LocalSocket mReceiver, mSender = null;
-    private LocalServerSocket mLss = null;
-    private int mSocketId;
-
     private int mTTL = 64;
 
     protected MediaCodec mMediaCodec;
 
     static {
-        // We determine whether or not the MediaCodec API should be used
         try {
             Class.forName("android.media.MediaCodec");
             // Will be set to MODE_MEDIACODEC_API at some point...
             Log.i(TAG, "Phone supports the MediaCoded API");
         } catch (ClassNotFoundException e) {
             Log.i(TAG, "Phone does not support the MediaCodec API");
-        }
-
-        // Starting lollipop, the LocalSocket API cannot be used anymore to feed
-        // a MediaRecorder object for security reasons
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH) {
-            sPipeApi = PIPE_API_PFD;
-        } else {
-            sPipeApi = PIPE_API_LS;
         }
     }
 
@@ -168,7 +123,7 @@ public abstract class MediaStream implements Stream {
      * @param ttl The time to live
      * @throws IOException
      */
-    public void setTimeToLive(int ttl) throws IOException {
+    public void setTimeToLive(int ttl) {
         mTTL = ttl;
     }
 
@@ -218,7 +173,6 @@ public abstract class MediaStream implements Stream {
 
     /**
      * Configures the stream with the settings supplied with
-     * {@link VideoStream#setVideoQuality(org.owwlo.watchcat.libstreaming.video.VideoQuality)}
      * for a {@link VideoStream} and {@link AudioStream#setAudioQuality(org.owwlo.watchcat.libstreaming.audio.AudioQuality)}
      * for a {@link AudioStream}.
      */
@@ -235,7 +189,6 @@ public abstract class MediaStream implements Stream {
      * Starts the stream.
      */
     public synchronized void start() throws IllegalStateException, IOException {
-
         if (mDestination == null)
             throw new IllegalStateException("No destination ip address set for the stream !");
 
@@ -283,74 +236,4 @@ public abstract class MediaStream implements Stream {
     public int getSSRC() {
         return getPacketizer().getSSRC();
     }
-
-    protected void createSockets() throws IOException {
-
-        if (sPipeApi == PIPE_API_LS) {
-
-            final String LOCAL_ADDR = "net.majorkernelpanic.streaming-";
-
-            for (int i = 0; i < 10; i++) {
-                try {
-                    mSocketId = new Random().nextInt();
-                    mLss = new LocalServerSocket(LOCAL_ADDR + mSocketId);
-                    break;
-                } catch (IOException e1) {
-                }
-            }
-
-            mReceiver = new LocalSocket();
-            mReceiver.connect(new LocalSocketAddress(LOCAL_ADDR + mSocketId));
-            mReceiver.setReceiveBufferSize(500000);
-            mReceiver.setSoTimeout(3000);
-            mSender = mLss.accept();
-            mSender.setSendBufferSize(500000);
-
-        } else {
-            Log.e(TAG, "parcelFileDescriptors createPipe version = Lollipop");
-            mParcelFileDescriptors = ParcelFileDescriptor.createPipe();
-            mParcelRead = new ParcelFileDescriptor(mParcelFileDescriptors[0]);
-            mParcelWrite = new ParcelFileDescriptor(mParcelFileDescriptors[1]);
-        }
-    }
-
-    protected void closeSockets() {
-        if (sPipeApi == PIPE_API_LS) {
-            try {
-                mReceiver.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                mSender.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                mLss.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            mLss = null;
-            mSender = null;
-            mReceiver = null;
-
-        } else {
-            try {
-                if (mParcelRead != null) {
-                    mParcelRead.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                if (mParcelWrite != null) {
-                    mParcelWrite.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 }

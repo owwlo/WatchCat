@@ -27,7 +27,6 @@ import org.owwlo.watchcat.libstreaming.audio.AudioQuality;
 import org.owwlo.watchcat.libstreaming.audio.AudioStream;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.libstreaming.video.H264Stream;
-import org.owwlo.watchcat.libstreaming.video.VideoQuality;
 import org.owwlo.watchcat.libstreaming.video.VideoStream;
 
 import java.io.IOException;
@@ -38,11 +37,6 @@ import java.io.IOException;
 public class SessionBuilder {
 
     public final static String TAG = "SessionBuilder";
-
-    /**
-     * Can be used with {@link #setVideoEncoder}.
-     */
-    public final static int VIDEO_NONE = 0;
 
     /**
      * Can be used with {@link #setVideoEncoder}.
@@ -59,8 +53,6 @@ public class SessionBuilder {
      */
     public final static int AUDIO_AAC = 5;
 
-    // Default configuration
-    private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
     private AudioQuality mAudioQuality = AudioQuality.DEFAULT_AUDIO_QUALITY;
     private Context mContext;
     private int mVideoEncoder = VIDEO_H264;
@@ -133,7 +125,6 @@ public class SessionBuilder {
         if (session.getVideoTrack() != null) {
             VideoStream video = session.getVideoTrack();
             video.setFlashState(mFlash);
-            video.setVideoQuality(mVideoQuality);
             video.setSurfaceView(mSurfaceView);
             video.setFlipImage(mFlip);
             video.setDestinationPorts(5006);
@@ -171,14 +162,6 @@ public class SessionBuilder {
      */
     public SessionBuilder setOrigin(String origin) {
         mOrigin = origin;
-        return this;
-    }
-
-    /**
-     * Sets the video stream quality.
-     */
-    public SessionBuilder setVideoQuality(VideoQuality quality) {
-        mVideoQuality = quality.clone();
         return this;
     }
 
@@ -247,74 +230,10 @@ public class SessionBuilder {
     }
 
     /**
-     * Returns the destination ip address set with {@link #setDestination(String)}.
-     */
-    public String getDestination() {
-        return mDestination;
-    }
-
-    /**
-     * Returns the origin ip address set with {@link #setOrigin(String)}.
-     */
-    public String getOrigin() {
-        return mOrigin;
-    }
-
-    /**
-     * Returns the audio encoder set with {@link #setAudioEncoder(int)}.
-     */
-    public int getAudioEncoder() {
-        return mAudioEncoder;
-    }
-
-    /**
      * Returns the id of the {@link android.hardware.Camera} set with {@link #setCamera(int)}.
      */
     public int getCamera() {
         return mCamera;
-    }
-
-    /**
-     * Returns the video encoder set with {@link #setVideoEncoder(int)}.
-     */
-    public int getVideoEncoder() {
-        return mVideoEncoder;
-    }
-
-    /**
-     * Returns the VideoQuality set with {@link #setVideoQuality(VideoQuality)}.
-     */
-    public VideoQuality getVideoQuality() {
-        return mVideoQuality;
-    }
-
-    /**
-     * Returns the AudioQuality set with {@link #setAudioQuality(AudioQuality)}.
-     */
-    public AudioQuality getAudioQuality() {
-        return mAudioQuality;
-    }
-
-    /**
-     * Returns the flash state set with {@link #setFlashEnabled(boolean)}.
-     */
-    public boolean getFlashState() {
-        return mFlash;
-    }
-
-    /**
-     * Returns the SurfaceView set with {@link #setSurfaceView(SurfaceView)}.
-     */
-    public SurfaceView getSurfaceView() {
-        return mSurfaceView;
-    }
-
-
-    /**
-     * Returns the time to live set with {@link #setTimeToLive(int)}.
-     */
-    public int getTimeToLive() {
-        return mTimeToLive;
     }
 
     /**
@@ -326,7 +245,6 @@ public class SessionBuilder {
                 .setOrigin(mOrigin)
                 .setSurfaceView(mSurfaceView)
                 .setPreviewFlip(mFlip)
-                .setVideoQuality(mVideoQuality)
                 .setVideoEncoder(mVideoEncoder)
                 .setFlashEnabled(mFlash)
                 .setCamera(mCamera)

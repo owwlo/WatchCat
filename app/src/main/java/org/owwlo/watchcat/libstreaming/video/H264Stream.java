@@ -21,6 +21,7 @@ package org.owwlo.watchcat.libstreaming.video;
 import android.annotation.SuppressLint;
 import android.graphics.ImageFormat;
 import android.hardware.Camera.CameraInfo;
+import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.service.textservice.SpellCheckerService.Session;
 import android.util.Base64;
@@ -30,9 +31,9 @@ import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.hw.EncoderDebugger;
 import org.owwlo.watchcat.libstreaming.mp4.MP4Config;
 import org.owwlo.watchcat.libstreaming.rtp.H264Packetizer;
+import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.IOException;
-import java.util.concurrent.Semaphore;
 
 /**
  * A class for streaming H.264 from the camera of an android device using RTP.
@@ -44,7 +45,6 @@ public class H264Stream extends VideoStream {
 
     public final static String TAG = "H264Stream";
 
-    private Semaphore mLock = new Semaphore(0);
     private MP4Config mConfig;
 
     /**
@@ -100,7 +100,6 @@ public class H264Stream extends VideoStream {
      */
     public synchronized void configure() throws IllegalStateException, IOException {
         super.configure();
-        mQuality = mRequestedQuality.clone();
         mConfig = testH264();
     }
 
@@ -116,12 +115,9 @@ public class H264Stream extends VideoStream {
     private MP4Config testMediaCodecAPI() throws RuntimeException, IOException {
         createCamera();
         updateCamera();
+        CamcorderProfile selectedProfile = CameraDaemon.getInstance().getCameraParams().getSelectedProfile();
         try {
-//			if (mQuality.resX>=640) {
-//				// Using the MediaCodec API with the buffer method for high resolutions is too slow
-//				mMode = MODE_MEDIARECORDER_API;
-//			}
-            EncoderDebugger debugger = EncoderDebugger.debug(mSettings, mQuality.resX, mQuality.resY);
+            EncoderDebugger debugger = EncoderDebugger.debug(mSettings, selectedProfile.videoFrameWidth, selectedProfile.videoFrameHeight);
             return new MP4Config(debugger.getB64SPS(), debugger.getB64PPS());
         } catch (Exception e) {
             // Fallback on the old streaming method using the MediaRecorder API

@@ -189,10 +189,6 @@ public class RtspServer extends Service {
         return false;
     }
 
-    public boolean isEnabled() {
-        return mEnabled;
-    }
-
     /**
      * Returns the bandwidth consumed by the RTSP server in bits per second.
      */
@@ -537,12 +533,6 @@ public class RtspServer extends Service {
 
         }
 
-        /**
-         * Check if the request is authorized
-         *
-         * @param request
-         * @return true or false
-         */
         private boolean isAuthorized(Request request) {
             String auth = request.headers.get("authorization");
             ServiceDaemon mainService = ServiceDaemon.getInstance();

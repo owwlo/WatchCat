@@ -18,7 +18,6 @@
 
 package org.owwlo.watchcat.libstreaming;
 
-import android.graphics.Bitmap;
 import android.hardware.Camera.CameraInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -31,7 +30,6 @@ import org.owwlo.watchcat.libstreaming.exceptions.ConfNotSupportedException;
 import org.owwlo.watchcat.libstreaming.exceptions.InvalidSurfaceException;
 import org.owwlo.watchcat.libstreaming.exceptions.StorageUnavailableException;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
-import org.owwlo.watchcat.libstreaming.video.VideoQuality;
 import org.owwlo.watchcat.libstreaming.video.VideoStream;
 
 import java.io.IOException;
@@ -269,19 +267,6 @@ public class Session {
      */
     public void setTimeToLive(int ttl) {
         mTimeToLive = ttl;
-    }
-
-    /**
-     * Sets the configuration of the stream. <br />
-     * You can call this method at any time and changes will take
-     * effect next time you call {@link #configure()}.
-     *
-     * @param quality Quality of the stream
-     */
-    public void setVideoQuality(VideoQuality quality) {
-        if (mVideoStream != null) {
-            mVideoStream.setVideoQuality(quality);
-        }
     }
 
     /**
