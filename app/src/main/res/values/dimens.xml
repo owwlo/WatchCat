@@ -8,6 +8,7 @@
     <dimen name="camera_preview_margin">5dp</dimen>
     <dimen name="camera_preview_radius">3dp</dimen>
     <dimen name="camera_preview_cover_height">160dp</dimen>
+    <dimen name="camera_preview_title_padding_top">5dp</dimen>
     <dimen name="camera_preview_title_padding">10dp</dimen>
     <dimen name="camera_preview_title">15dp</dimen>
     <dimen name="camera_preview_padding_bottom">5dp</dimen>

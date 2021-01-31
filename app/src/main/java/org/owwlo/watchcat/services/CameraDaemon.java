@@ -97,7 +97,7 @@ public class CameraDaemon extends Service implements Session.Callback {
                 .setContext(getApplicationContext())
                 .setAudioEncoder(SessionBuilder.AUDIO_NONE)
                 .setVideoEncoder(SessionBuilder.VIDEO_H264);
-        
+
         sInstance = this;
     }
 
