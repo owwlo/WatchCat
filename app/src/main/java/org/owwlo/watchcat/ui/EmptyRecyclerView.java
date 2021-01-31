@@ -13,6 +13,9 @@ public class EmptyRecyclerView extends RecyclerView {
     @Nullable
     View emptyView;
 
+    // -1 make sure `checkIfEmpty` will be called at least once
+    private int lastCount = -1;
+
     public EmptyRecyclerView(Context context) {
         super(context);
     }
@@ -26,8 +29,12 @@ public class EmptyRecyclerView extends RecyclerView {
     }
 
     void checkIfEmpty() {
-        if (emptyView != null) {
-            emptyView.setVisibility(getAdapter().getItemCount() > 0 ? GONE : VISIBLE);
+        final int newCount = getAdapter().getItemCount();
+        if (lastCount != newCount) {
+            lastCount = newCount;
+            if (emptyView != null) {
+                emptyView.setVisibility(getAdapter().getItemCount() > 0 ? GONE : VISIBLE);
+            }
         }
     }
 
@@ -35,7 +42,21 @@ public class EmptyRecyclerView extends RecyclerView {
     AdapterDataObserver observer = new AdapterDataObserver() {
         @Override
         public void onChanged() {
-            super.onChanged();
+            checkIfEmpty();
+        }
+
+        @Override
+        public void onItemRangeChanged(int positionStart, int itemCount) {
+            checkIfEmpty();
+        }
+
+        @Override
+        public void onItemRangeInserted(int positionStart, int itemCount) {
+            checkIfEmpty();
+        }
+
+        @Override
+        public void onItemRangeRemoved(int positionStart, int itemCount) {
             checkIfEmpty();
         }
     };
