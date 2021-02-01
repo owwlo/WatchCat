@@ -2,13 +2,13 @@ package org.owwlo.watchcat.ui.activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,16 +19,14 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.TextView;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.IdRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -78,6 +76,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     private View mListEmptyPlaceholder;
     private CameraListAdapter mCameraAdapter;
     private List<Camera> mCameraList;
+    private AuthorizationManagementDialog authorizationManagementDialog = null;
 
     private Handler mHandler = new Handler();
 
@@ -180,6 +179,9 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
     @Override
     protected void onDestroy() {
+        if (authorizationManagementDialog != null) {
+            authorizationManagementDialog.getDialog().dismiss();
+        }
         EventBus.getDefault().unregister(this);
         unbindService(mServiceConnection);
         super.onDestroy();
@@ -209,15 +211,14 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         DisplayMetrics outMetrics = new DisplayMetrics();
         display.getMetrics(outMetrics);
 
-        float density = getResources().getDisplayMetrics().density;
-        float dpHeight = outMetrics.heightPixels / density;
-        float dpWidth = outMetrics.widthPixels / density;
+        final float density = getResources().getDisplayMetrics().density;
+        final float dpHeight = outMetrics.heightPixels / density;
+        final float dpWidth = outMetrics.widthPixels / density;
 
         Log.d(TAG, "dpHeight: " + dpHeight + ", dpWidth: " + dpWidth);
 
-        int dpMin = (int) Math.min(dpHeight, dpWidth);
-        int dpItemWidth = dpMin < Constants.PREVIEW_DEFAULT_WIDTH_IN_DP ? dpMin : Constants.PREVIEW_DEFAULT_WIDTH_IN_DP;
-        return (int) (dpWidth / dpItemWidth);
+        final float dpItemWidth = Math.min(dpWidth, Constants.PREVIEW_DEFAULT_WIDTH_IN_DP);
+        return Math.round(dpWidth / dpItemWidth);
     }
 
     // TODO extract into a new class
@@ -302,12 +303,20 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         settingsButton.setOnActionSelectedListener(this);
     }
 
+    @ColorInt
+    int getThemeColor(int resid) {
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = getTheme();
+        theme.resolveAttribute(resid, typedValue, true);
+        return typedValue.data;
+    }
+
     SpeedDialActionItem getNewMenuFab(@IdRes int id, @DrawableRes int fabImageResource, @StringRes int labelRes) {
+
         return new SpeedDialActionItem.Builder(id, fabImageResource)
                 .setLabel(labelRes)
-                .setLabelColor(Color.WHITE)
-                .setLabelBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.fab_background, getTheme()))
-                .setFabBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.fab_background, getTheme()))
+                .setLabelColor(getThemeColor(R.attr.colorOnPrimarySurface))
+                .setLabelBackgroundColor(getThemeColor(R.attr.colorPrimarySurface))
                 .setLabelClickable(true)
                 .setFabSize(FloatingActionButton.SIZE_MINI)
                 .create();
@@ -431,10 +440,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
             fetchAllViewers.execute();
         }
 
-        public void show() {
-            dialog.show();
-            Window window = dialog.getWindow();
-            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        public Dialog getDialog() {
+            return dialog;
         }
 
         @Override
@@ -457,8 +464,10 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
         final int id = actionItem.getId();
         switch (id) {
             case R.id.fab_authorization: {
-                AuthorizationManagementDialog dialog = new AuthorizationManagementDialog(MainScreenActivity.this);
-                dialog.show();
+                if (authorizationManagementDialog == null) {
+                    authorizationManagementDialog = new AuthorizationManagementDialog(this);
+                }
+                authorizationManagementDialog.getDialog().show();
                 break;
             }
         }

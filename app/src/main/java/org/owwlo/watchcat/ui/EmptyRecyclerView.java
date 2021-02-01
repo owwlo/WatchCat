@@ -1,6 +1,7 @@
 package org.owwlo.watchcat.ui;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 public class EmptyRecyclerView extends RecyclerView {
     @Nullable
     View emptyView;
+
+    Handler handler = new Handler();
 
     // -1 make sure `checkIfEmpty` will be called at least once
     private int lastCount = -1;
@@ -33,7 +36,12 @@ public class EmptyRecyclerView extends RecyclerView {
         if (lastCount != newCount) {
             lastCount = newCount;
             if (emptyView != null) {
-                emptyView.setVisibility(getAdapter().getItemCount() > 0 ? GONE : VISIBLE);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        emptyView.setVisibility(getAdapter().getItemCount() > 0 ? GONE : VISIBLE);
+                    }
+                });
             }
         }
     }

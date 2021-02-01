@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/background_dark"
+    android:fitsSystemWindows="true"
     tools:context=".ui.activities.CameraActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -15,7 +16,7 @@
             android:id="@+id/stop_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/semi_transparent_overlay_back"
+            android:background="@color/background_camera_enabled_overlay"
             android:elevation="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -26,7 +27,6 @@
                 android:id="@+id/overlay_elements_container"
                 android:layout_width="300dp"
                 android:layout_height="150dp"
-                android:background="@color/material_on_background_emphasis_medium"
                 app:layout_constraintBottom_toBottomOf="@+id/h_guideline"
                 app:layout_constraintLeft_toLeftOf="@+id/v_guideline"
                 app:layout_constraintRight_toRightOf="@+id/v_guideline"
@@ -37,12 +37,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Stop Streaming"
+                    app:icon="@drawable/ic_twotone_stop_circle_24"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:layout_editor_absoluteX="3dp"
-                    tools:layout_editor_absoluteY="1dp" />
+                    app:layout_constraintTop_toTopOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <androidx.constraintlayout.widget.Guideline
@@ -71,7 +70,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/fab_margin"
-                android:backgroundTint="#58B7FF"
+                android:backgroundTint="?colorPrimary"
+                app:borderWidth="0dp"
                 app:fabSize="mini"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -92,7 +92,8 @@
                     android:id="@+id/camera_start_serving_button_fab"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#58B7FF"
+                    android:backgroundTint="?colorPrimary"
+                    app:borderWidth="0dp"
                     app:fabSize="mini"
                     app:srcCompat="@drawable/ic_baseline_play_circle_filled"
                     app:useCompatPadding="false" />
@@ -110,7 +111,6 @@
                     android:text="Enable Camera"
                     android:textColor="#FAFAFA"
                     android:textStyle="bold" />
-
             </LinearLayout>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -118,7 +118,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/fab_margin"
-                android:backgroundTint="#58B7FF"
+                android:backgroundTint="?colorPrimary"
+                app:borderWidth="0dp"
                 app:fabSize="mini"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toLeftOf="@id/camera_start_serving_button"
