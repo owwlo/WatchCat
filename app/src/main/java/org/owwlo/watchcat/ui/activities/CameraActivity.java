@@ -16,16 +16,16 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -170,7 +170,6 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         mStopActionBtn = findViewById(R.id.stop_streaming_button);
 
         mBtnSettings.setOnClickListener(this);
-        mBtnSettings.setVisibility(View.GONE);
         mBtnToggleCamera.setOnClickListener(this);
         mBtnToggleCameraFab.setOnClickListener(this);
         mBtnBack.setOnClickListener(this);
@@ -258,34 +257,36 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    public static class CameraSettingsDialogFragment extends DialogFragment implements View.OnClickListener {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            LayoutInflater inflater = requireActivity().getLayoutInflater();
-            View inner = inflater.inflate(R.layout.camera_settings_dialog, null);
+    public class CameraSettingsDialog {
+        AlertDialog dialog;
+        Spinner streamingQualitySpinner;
 
-            Button apply = inner.findViewById(R.id.settings_done_button);
-            Button cancel = inner.findViewById(R.id.settings_cancel_button);
-            apply.setOnClickListener(CameraSettingsDialogFragment.this);
-            cancel.setOnClickListener(CameraSettingsDialogFragment.this);
+        public CameraSettingsDialog(CameraActivity activity) {
+            View view = getLayoutInflater().inflate(R.layout.dialog_camera_mode_settings, null, false);
+            dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.fab_authorization)
+                    .setView(view)
+                    .setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mCameraDaemon.getCameraParams().setSelectedProfile(streamingQualitySpinner.getSelectedItemPosition());
+                            dialog.dismiss();
+                        }
+                    })
+                    .create();
 
-            return builder.setView(inner).create();
+            streamingQualitySpinner = view.findViewById(R.id.spinner_streaming_quality);
+            String[] items = mCameraDaemon.getCameraParams().getSupportedProfilesDesc();
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, items);
+            streamingQualitySpinner.setAdapter(adapter);
+            streamingQualitySpinner.setSelection(mCameraDaemon.getCameraParams().getSelectedProfileIdx());
         }
 
-        @Override
-        public void onClick(View v) {
-            int id = v.getId();
-            switch (id) {
-                case R.id.settings_done_button: {
-                    CameraSettingsDialogFragment.this.dismiss();
-                }
-                case R.id.settings_cancel_button: {
-                    CameraSettingsDialogFragment.this.dismiss();
-                }
-            }
+        public Dialog getDialog() {
+            return dialog;
         }
     }
+
+    private CameraSettingsDialog cameraSettingsDialog = null;
 
     public void toggleBrightness(boolean dark) {
         WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
@@ -359,8 +360,10 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
                 break;
             }
             case R.id.camera_setting_button: {
-                DialogFragment newFragment = new CameraSettingsDialogFragment();
-                newFragment.show(getSupportFragmentManager(), null);
+                if (cameraSettingsDialog == null) {
+                    cameraSettingsDialog = new CameraSettingsDialog(this);
+                }
+                cameraSettingsDialog.getDialog().show();
                 break;
             }
             case R.id.stop_streaming_button: {

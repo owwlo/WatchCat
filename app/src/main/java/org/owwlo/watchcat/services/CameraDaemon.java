@@ -7,6 +7,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.gson.Gson;
+
 import org.owwlo.watchcat.libstreaming.RtspServer;
 import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
@@ -60,7 +62,11 @@ public class CameraDaemon extends Service implements Session.Callback {
 
         final List<Integer> awesomeProfiles = Arrays.asList(CamcorderProfile.QUALITY_1080P, CamcorderProfile.QUALITY_720P, CamcorderProfile.QUALITY_480P, CamcorderProfile.QUALITY_LOW);
         List<Integer> supportedProfiles = new ArrayList<>();
-        Integer selectedProfile = CamcorderProfile.QUALITY_LOW;
+        int selectedProfileIdx = 0;
+
+        private String serializeProfile(CamcorderProfile profile) {
+            return new Gson().toJson(profile);
+        }
 
         public CameraParams() {
             for (Integer profile : awesomeProfiles) {
@@ -68,13 +74,34 @@ public class CameraDaemon extends Service implements Session.Callback {
                     supportedProfiles.add(profile);
                 }
             }
-            if (!supportedProfiles.isEmpty()) {
-                selectedProfile = supportedProfiles.get(0);
+            for (Integer profile : supportedProfiles) {
+                CamcorderProfile p = CamcorderProfile.get(profile);
+                Log.d(TAG, "supported profile: " + serializeProfile(p));
             }
         }
 
         public CamcorderProfile getSelectedProfile() {
-            return CamcorderProfile.get(selectedProfile);
+            return CamcorderProfile.get(supportedProfiles.get(selectedProfileIdx));
+        }
+
+        public int getSelectedProfileIdx() {
+            return selectedProfileIdx;
+        }
+
+        public void setSelectedProfile(int idx) {
+            if (idx < 0 || idx >= supportedProfiles.size()) {
+                return;
+            }
+            selectedProfileIdx = idx;
+        }
+
+        public String[] getSupportedProfilesDesc() {
+            String[] desc = new String[supportedProfiles.size()];
+            for (int i = 0; i < desc.length; i++) {
+                CamcorderProfile p = CamcorderProfile.get(supportedProfiles.get(i));
+                desc[i] = "" + p.videoFrameWidth + "x" + p.videoFrameHeight + " " + p.videoFrameRate + "fps";
+            }
+            return desc;
         }
     }
 
@@ -89,7 +116,6 @@ public class CameraDaemon extends Service implements Session.Callback {
         Toaster.debug.info(this, "CameraDaemon started: " + Utils.getLocalIPAddress() + ":" + mStreamingPort);
 
         cameraParams = new CameraParams();
-        CamcorderProfile selectedProfile = cameraParams.getSelectedProfile();
 
         // TODO add audio support
         SessionBuilder.getInstance()
