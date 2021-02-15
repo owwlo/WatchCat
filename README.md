@@ -16,9 +16,9 @@ WatchCat - yet another Android Remote Surveillance Camera app.
 	* _I believe this is due to the Android system level policy. Personally, I haven't figured out a way to capture and to stream the video fully on background with screen off, if you know how to do this, please let me know ;)_
 
 ## Screenshots
-![watchcat.screenshot.main](/screenshots/watchcat.screenshot.main.png?raw=true "List of Cameras")
-![watchcat.screenshot.main.landscape](/screenshots/watchcat.screenshot.main.landscape.png?raw=true "List of Cameras(Landscape)")
-![watchcat.screenshot.camera_mode](/screenshots/watchcat.screenshot.camera_mode.png?raw=true "Camera Mode")
+<img src="/screenshots/watchcat.screenshot.main.png" alt="List of Cameras" width="400"/>
+<img src="/screenshots/watchcat.screenshot.main.landscape.png" alt="List of Cameras(Landscape)" width="400"/>
+<img src="/screenshots/watchcat.screenshot.camera_mode.png" alt="Camera Mode" width="400"/>
 
 ## Tested Devices
 * **[Android 10]** Teclast T30 **_(tablet)_** _(via [treble_experimentations](https://github.com/phhusson/treble_experimentations))_
