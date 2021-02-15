@@ -9,12 +9,6 @@ WatchCat - yet another Android Remote Surveillance Camera app.
 	 * Upto 1080p Video Streaming
 * Automatic Service Discovery within the same LAN
 * Play through Google ExoPlayer
-#### TODOs
-* ~~Use [Android ExoPlayer](https://github.com/google/ExoPlayer) to replace libvlc~~
-* ~~tablet optimization~~
-* Access Control
-* Logo
-* Optimize resolution selection
 
 ### Limitations
 * The screen will be kept ON during streaming and standing by
@@ -22,7 +16,9 @@ WatchCat - yet another Android Remote Surveillance Camera app.
 	* _I believe this is due to the Android system level policy. Personally, I haven't figured out a way to capture and to stream the video fully on background with screen off, if you know how to do this, please let me know ;)_
 
 ## Screenshots
-TODO
+![watchcat.screenshot.main](/screenshots/watchcat.screenshot.main.png?raw=true "List of Cameras")
+![watchcat.screenshot.main.landscape](/screenshots/watchcat.screenshot.main.landscape.png?raw=true "List of Cameras(Landscape)")
+![watchcat.screenshot.camera_mode](/screenshots/watchcat.screenshot.camera_mode.png?raw=true "Camera Mode")
 
 ## Tested Devices
 * **[Android 10]** Teclast T30 **_(tablet)_** _(via [treble_experimentations](https://github.com/phhusson/treble_experimentations))_
@@ -40,3 +36,4 @@ TODO
 * FloatingActionButtonSpeedDial [https://github.com/leinardi/FloatingActionButtonSpeedDial](https://github.com/leinardi/FloatingActionButtonSpeedDial)
 * PinLockView [https://github.com/aritraroy/PinLockView](https://github.com/aritraroy/PinLockView)
 * EventBus [https://github.com/greenrobot/EventBus](https://github.com/greenrobot/EventBus)
+
