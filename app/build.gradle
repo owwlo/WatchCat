@@ -26,8 +26,15 @@ android {
         versionName advancedVersioning.versionName
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled true
-    }
 
+        ndk {
+        }
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_static"
+            }
+        }
+    }
     buildTypes {
         debug {
             debuggable true
@@ -37,6 +44,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path 'src/main/cpp/CMakeLists.txt'
         }
     }
     compileOptions {

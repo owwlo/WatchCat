@@ -42,6 +42,7 @@ import org.owwlo.watchcat.libstreaming.hw.EncoderDebugger;
 import org.owwlo.watchcat.libstreaming.hw.NV21Convertor;
 import org.owwlo.watchcat.libstreaming.rtp.MediaCodecInputStream;
 import org.owwlo.watchcat.services.CameraDaemon;
+import org.owwlo.watchcat.utils.NativeHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,7 +53,6 @@ import java.util.concurrent.Semaphore;
  * Don't use this class directly.
  */
 public abstract class VideoStream extends MediaStream {
-
     protected final static String TAG = "VideoStream";
 
     protected SurfaceHolder.Callback mSurfaceHolderCallback = null;
@@ -272,27 +272,9 @@ public abstract class VideoStream extends MediaStream {
         }
     }
 
-    // TODO native implementation
-    private static void rotateYUV420Degree180(byte[] data, int imageWidth, int imageHeight) {
-        byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];
-        int i;
-        int count = 0;
-        for (i = imageWidth * imageHeight - 1; i >= 0; i--) {
-            yuv[count] = data[i];
-            count++;
-        }
-        i = imageWidth * imageHeight * 3 / 2 - 1;
-        for (i = imageWidth * imageHeight * 3 / 2 - 1; i >= imageWidth
-                * imageHeight; i -= 2) {
-            yuv[count++] = data[i - 1];
-            yuv[count++] = data[i];
-        }
-        System.arraycopy(yuv, 0, data, 0, Math.min(data.length, yuv.length));
-    }
-
     private void flipFilter(byte[] data, int imageWidth, int imageHeight) {
         if (mFlipImage) {
-            rotateYUV420Degree180(data, imageWidth, imageHeight);
+            NativeHelper.nv21Flip(data, imageWidth, imageHeight);
         }
     }
 
@@ -409,6 +391,7 @@ public abstract class VideoStream extends MediaStream {
                         Log.e(TAG, "No buffer available !");
                     }
                 } finally {
+                    // TODO disable previewing during streaming?
                     mCamera.addCallbackBuffer(data);
                 }
             }
