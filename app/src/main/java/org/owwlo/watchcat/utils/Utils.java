@@ -2,21 +2,26 @@ package org.owwlo.watchcat.utils;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
 
 import com.google.android.exoplayer2.util.Log;
 
+import org.owwlo.watchcat.BuildConfig;
 import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.ByteOrder;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -25,6 +30,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import static android.content.Context.WIFI_SERVICE;
 
 public class Utils {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
@@ -45,16 +52,46 @@ public class Utils {
         return IPV4_PATTERN.matcher(input).matches();
     }
 
+
+    public static InetAddress wifiIpAddress(Context context) {
+        WifiManager wifiManager = (WifiManager) context.getSystemService(WIFI_SERVICE);
+        int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+
+        // Convert little-endian to big-endianif needed
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            ipAddress = Integer.reverseBytes(ipAddress);
+        }
+
+        if (!BuildConfig.DEBUG) {
+            final byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+            try {
+                return InetAddress.getByAddress(ipByteArray);
+            } catch (UnknownHostException ex) {
+            }
+            return null;
+        }
+
+        List<InetAddress> ips = getLocalIPAddresses();
+        for (final InetAddress ip : ips) {
+            if (ip.getHostAddress().indexOf("192.168.0.") != -1) {
+                return ip;
+            }
+        }
+        return null;
+    }
+
+
     /**
      * Get local Ip address.
      */
-    public static InetAddress getLocalIPAddress() {
+    public static List<InetAddress> getLocalIPAddresses() {
         Enumeration<NetworkInterface> enumeration = null;
         try {
             enumeration = NetworkInterface.getNetworkInterfaces();
         } catch (SocketException e) {
             e.printStackTrace();
         }
+        ArrayList<InetAddress> ips = new ArrayList<>();
         if (enumeration != null) {
             while (enumeration.hasMoreElements()) {
                 NetworkInterface nif = enumeration.nextElement();
@@ -63,13 +100,13 @@ public class Utils {
                     while (inetAddresses.hasMoreElements()) {
                         InetAddress inetAddress = inetAddresses.nextElement();
                         if (!inetAddress.isLoopbackAddress() && isIPv4Address(inetAddress.getHostAddress())) {
-                            return inetAddress;
+                            ips.add(inetAddress);
                         }
                     }
                 }
             }
         }
-        return null;
+        return ips;
     }
 
 

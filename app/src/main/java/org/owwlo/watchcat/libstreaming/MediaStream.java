@@ -18,7 +18,6 @@
 
 package org.owwlo.watchcat.libstreaming;
 
-import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.util.Log;
 
@@ -203,7 +202,6 @@ public abstract class MediaStream implements Stream {
     /**
      * Stops the stream.
      */
-    @SuppressLint("NewApi")
     public synchronized void stop() {
         if (mStreaming) {
             try {

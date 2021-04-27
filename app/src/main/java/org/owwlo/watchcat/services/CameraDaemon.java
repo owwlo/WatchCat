@@ -30,8 +30,6 @@ public class CameraDaemon extends Service implements Session.Callback {
     private Session mCurrentSession = null;
     private String mAccessPassword = "";
     private int mStreamingPort = Constants.DEFAULT_STREAMING_PORT;
-    private static byte[] previewData = new byte[0];
-    private long previewTimestamp = 0;
 
     // Binding starts
     private final IBinder binder = new LocalBinder();
@@ -113,7 +111,7 @@ public class CameraDaemon extends Service implements Session.Callback {
 
         mStreamingPort = Utils.getAvailablePort(Constants.DEFAULT_STREAMING_PORT);
 
-        Toaster.debug.info(this, "CameraDaemon started: " + Utils.getLocalIPAddress() + ":" + mStreamingPort);
+        Toaster.debug.info(this, "CameraDaemon started port: " + mStreamingPort);
 
         cameraParams = new CameraParams();
 
@@ -139,7 +137,6 @@ public class CameraDaemon extends Service implements Session.Callback {
 
     public void stopPreviewing() {
         if (mCurrentSession != null) {
-            genPreviewIfNeeded();
             mCurrentSession.stopPreview();
             mCurrentSession.stop();
             mCurrentSession.release();
@@ -161,23 +158,6 @@ public class CameraDaemon extends Service implements Session.Callback {
     private void logError(final String msg) {
         final String error = (msg == null) ? "Error unknown" : msg;
         Log.e(TAG, error);
-    }
-
-    public static byte[] getPreviewData() {
-        return previewData;
-    }
-
-    public long getPreviewTimestamp() {
-        return previewTimestamp;
-    }
-
-    private void genPreviewIfNeeded() {
-        if (mCurrentSession == null) return;
-        byte[] jpgBytes = mCurrentSession.getLastPreviewImage();
-        if (jpgBytes != null) {
-            previewData = jpgBytes;
-            previewTimestamp = System.currentTimeMillis();
-        }
     }
 
     public int getStreamingPort() {

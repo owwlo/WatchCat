@@ -36,11 +36,13 @@ import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationRequestEvent;
 import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationResultEvent;
 import org.owwlo.watchcat.utils.EventBus.PinInputDoneEvent;
 import org.owwlo.watchcat.utils.JsonUtils;
+import org.owwlo.watchcat.utils.PreviewKeeper;
 import org.owwlo.watchcat.utils.StringDetailedRequest;
 import org.owwlo.watchcat.utils.Utils;
 import org.owwlo.watchcat.utils.WebServer;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -52,10 +54,11 @@ public class ServiceDaemon extends Service implements NsdListener {
     private NsdHelper nsdHelper = null;
     private RequestQueue mHttpRequestQueue;
     private RemoteCameraManager mCameraManager = null;
-    private String mLocalIpAddress = "";
+    private InetAddress localIpAddress;
     private int mControlPort = 0;
     private AppDatabase database = null;
     private AuthManager authManager = null;
+    private PreviewKeeper previewKeeper = PreviewKeeper.getInstance();
 
     private static ServiceDaemon sInstance = null;
 
@@ -235,7 +238,7 @@ public class ServiceDaemon extends Service implements NsdListener {
             info.setWidth(1920);
             info.setHeight(1080);
 
-            info.setThumbnailTimestamp(cameraDaemon.getPreviewTimestamp());
+            info.setThumbnailTimestamp(previewKeeper.getLastPreviewTime());
         }
         return info;
     }
@@ -334,20 +337,22 @@ public class ServiceDaemon extends Service implements NsdListener {
                 return;
             }
             // nsdService.getHostIp() is not reliable here if the device comes with >1 NICs
-            final String ip = serviceNameSplits[1];
+            final String[] ips = serviceNameSplits[1].split(",");
             // TODO protocol version check
             String type = nsdService.getType();
-            Log.d(TAG, "resolved[REMOTE]: " + type + " " + ip + ":" + nsdService.getPort());
-            final String url = Utils.Urls.getControlTarget(ip, nsdService.getPort()).getCameraInfoURI();
-            StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                    url,
-                    response -> {
-                        Log.d(TAG, ip + " response: " + response);
-                        CameraInfo info = JSON.parseObject(response, CameraInfo.class);
-                        mCameraManager.handleCameraInfo(ip, info);
-                        mCameraManager.sendMyInfo(ip, info);
-                    }, error -> Log.d(TAG, "error requesting " + url + ", err: " + error.toString()));
-            mHttpRequestQueue.add(stringRequest);
+            Log.d(TAG, "resolved[REMOTE]: " + type + " " + serviceNameSplits[1] + ":" + nsdService.getPort());
+            for (final String ip : ips) {
+                final String url = Utils.Urls.getControlTarget(ip, nsdService.getPort()).getCameraInfoURI();
+                StringRequest stringRequest = new StringRequest(Request.Method.GET,
+                        url,
+                        response -> {
+                            Log.d(TAG, ip + " response: " + response);
+                            CameraInfo info = JSON.parseObject(response, CameraInfo.class);
+                            mCameraManager.handleCameraInfo(ip, info);
+                            mCameraManager.sendMyInfo(ip, info);
+                        }, error -> Log.d(TAG, "error requesting " + url + ", err: " + error.toString()));
+                mHttpRequestQueue.add(stringRequest);
+            }
         }
     }
 
@@ -402,12 +407,12 @@ public class ServiceDaemon extends Service implements NsdListener {
     }
 
     private void initLocalIp() {
-        mLocalIpAddress = Utils.getLocalIPAddress().getHostAddress();
-        Log.d(TAG, "Device IP: " + mLocalIpAddress);
+        localIpAddress = Utils.wifiIpAddress(this);
+        Log.d(TAG, "Device WIFI IP: " + localIpAddress.getHostAddress());
     }
 
     private void initServiceName() {
-        selfServiceName = "org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER + "." + System.currentTimeMillis() + ":" + mLocalIpAddress;
+        selfServiceName = "org.owwlo.watchcat.camera." + Constants.WATCHCAT_API_VER + "." + System.currentTimeMillis() + ":" + localIpAddress.getHostAddress();
     }
 
     private void startWebServer() {

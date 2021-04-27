@@ -8,7 +8,6 @@ import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.model.GeneralNetworkResponse;
 import org.owwlo.watchcat.model.Viewer;
 import org.owwlo.watchcat.model.ViewerPasscode;
-import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.EventBus.IncomingAuthorizationCancelEvent;
 
@@ -39,6 +38,7 @@ public class WebServer extends NanoHTTPD {
 
     private ServiceDaemon mainService;
     private AuthManager authManager;
+    private PreviewKeeper previewKeeper = PreviewKeeper.getInstance();
 
     public WebServer(int port, ServiceDaemon serviceDaemon) {
         super(port);
@@ -84,7 +84,7 @@ public class WebServer extends NanoHTTPD {
                     final CameraInfo info = mainService.getCameraInfo();
                     return newFixedLengthResponse(Response.Status.OK, kMIME_JSON, JsonUtils.toJson(info));
                 } else if (next.equals(kURL_GET_PREVIEW)) {
-                    byte[] previewData = CameraDaemon.getPreviewData();
+                    byte[] previewData = previewKeeper.getLastPreviewImageInBytes();
                     ByteArrayInputStream bs = new ByteArrayInputStream(previewData);
                     return newChunkedResponse(Response.Status.OK, kMIME_JPEG, bs);
                 }

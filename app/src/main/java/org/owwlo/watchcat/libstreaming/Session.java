@@ -450,10 +450,8 @@ public class Session {
      **/
     public void syncStart(int id)
             throws CameraInUseException,
-            StorageUnavailableException,
             ConfNotSupportedException,
             InvalidSurfaceException,
-            UnknownHostException,
             IOException {
 
         Stream stream = id == 0 ? mAudioStream : mVideoStream;
@@ -760,10 +758,5 @@ public class Session {
             return mAudioStream;
         else
             return mVideoStream;
-    }
-
-    public byte[] getLastPreviewImage() {
-        if (mVideoStream != null) return mVideoStream.getLastPreviewImage();
-        return null;
     }
 }

@@ -20,8 +20,6 @@ package org.owwlo.watchcat.libstreaming.video;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -43,8 +41,8 @@ import org.owwlo.watchcat.libstreaming.hw.NV21Convertor;
 import org.owwlo.watchcat.libstreaming.rtp.MediaCodecInputStream;
 import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.utils.NativeHelper;
+import org.owwlo.watchcat.utils.PreviewKeeper;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Semaphore;
@@ -74,7 +72,7 @@ public abstract class VideoStream extends MediaStream {
 
     protected String mMimeType;
     protected int mCameraImageFormat;
-    private byte[] mLastPreview = null;
+    private PreviewKeeper previewKeeper = PreviewKeeper.getInstance();
 
     /**
      * Don't use this class directly.
@@ -293,27 +291,10 @@ public abstract class VideoStream extends MediaStream {
         Camera.PreviewCallback callback = new Camera.PreviewCallback() {
             @Override
             public void onPreviewFrame(byte[] data, Camera camera) {
-                mLastPreview = data;
+                previewKeeper.tryUpdatePreview(data, camera, mFlipImage);
             }
         };
         mCamera.setPreviewCallback(callback);
-    }
-
-    public byte[] getLastPreviewImage() {
-        if (mLastPreview == null) return null;
-
-        byte[] workingBytes = mLastPreview.clone();
-
-        Camera.Parameters parameters = mCamera.getParameters();
-        int width = parameters.getPreviewSize().width;
-        int height = parameters.getPreviewSize().height;
-        flipFilter(workingBytes, width, height);
-        YuvImage yuv = new YuvImage(workingBytes, parameters.getPreviewFormat(), width, height, null);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        yuv.compressToJpeg(new Rect(0, 0, width, height), 80, out);
-
-        return out.toByteArray();
     }
 
     /**
@@ -386,6 +367,7 @@ public abstract class VideoStream extends MediaStream {
                             flipFilter(data, width, height);
                             converter.convert(data, inputBuffers[bufferIndex]);
                         }
+                        previewKeeper.tryUpdatePreview(data, camera, mFlipImage);
                         mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
                     } else {
                         Log.e(TAG, "No buffer available !");
