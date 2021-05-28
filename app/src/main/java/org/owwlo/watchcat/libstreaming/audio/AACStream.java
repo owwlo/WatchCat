@@ -159,7 +159,7 @@ public class AACStream extends AudioStream {
     }
 
     @Override
-    @SuppressLint({"InlinedApi", "NewApi"})
+    @SuppressLint({"InlinedApi", "NewApi", "MissingPermission"})
     protected void encodeWithMediaCodec() throws IOException {
 
         final int bufferSize = AudioRecord.getMinBufferSize(mQuality.samplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 2;

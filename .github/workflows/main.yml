@@ -62,7 +62,7 @@ jobs:
       uses: android-actions/setup-android@v2
 
     - name: Build Repo
-      run: ./gradlew --no-daemon :app:build -x test
+      run: ./gradlew --no-daemon :app:assembleRelease
 
     - name: Upload APKs to Release
       uses: svenstaro/upload-release-action@v2
