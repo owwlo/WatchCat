@@ -1,11 +1,11 @@
 include ':pinlockview'
 include ':SpeedDial'
-rootProject.name='WatchCat'
+rootProject.name = 'WatchCat'
 include ':app', ':playerlibrary'
 
 // The issue with ExoPlayer is, as for now(20200607), the stock ExoPlayer(https://github.com/google/ExoPlayer) hasn't
 // merged the patch to support RTSP: https://github.com/google/ExoPlayer/issues/55
 // You need a self-patch ExoPlayer in the following path.
-gradle.ext.exoplayerRoot = './libs/ExoPlayer_rtsp'
+gradle.ext.exoplayerRoot = './libs/ExoPlayer'
 gradle.ext.exoplayerModulePrefix = 'exoplayer-'
 apply from: new File(gradle.ext.exoplayerRoot, 'core_settings.gradle')

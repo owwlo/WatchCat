@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="application_name">WatchCat Player</string>
+  <string name="error_no_stream_selected">No stream is selected.</string>
+</resources>
