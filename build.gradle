@@ -8,9 +8,9 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.3'
+        classpath 'com.android.tools.build:gradle:7.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'me.moallemi.gradle:advanced-build-version:1.7.3'
+        classpath 'me.moallemi.gradle:advanced-build-version:1.7.4'
     }
 }
 
