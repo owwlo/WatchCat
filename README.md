@@ -1,4 +1,4 @@
-# <img src="/github_resources/logo.256x256.png" alt="[image:Logo]" width="48"> WatchCat
+# <img src="/github_resources/logo.256x256.png" alt="[image:Logo]" width="64"> WatchCat
 WatchCat - yet another Android Remote Surveillance Camera app.
 
 ## Features and Limitations
