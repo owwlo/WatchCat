@@ -3,21 +3,19 @@ package org.owwlo.watchcat.ui.activities;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.rtsp.RtspDefaultClient;
 import com.google.android.exoplayer2.source.rtsp.RtspMediaSource;
-import com.google.android.exoplayer2.source.rtsp.core.Client;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.EventLogger;
@@ -40,11 +38,6 @@ public final class ExoPlayerActivity extends Activity {
 
     @Nullable
     private SimpleExoPlayer player;
-
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -118,17 +111,21 @@ public final class ExoPlayerActivity extends Activity {
 
         Uri uri = Uri.parse(intent.getStringExtra(INTENT_EXTRA_URI));
 
-        Toaster.debug.info(this, "Playing from URI:" + uri);
 
-        MediaSource mediaSource = new RtspMediaSource.Factory(RtspDefaultClient.factory()
-                .setFlags(Client.FLAG_ENABLE_RTCP_SUPPORT)
-                .setNatMethod(Client.RTSP_NAT_DUMMY))
-                .createMediaSource(uri);
+        MediaItem mediaItem = MediaItem.fromUri(uri);
+        RtspMediaSource mediaSource = new RtspMediaSource.Factory().setDebugLoggingEnabled(true).setForceUseRtpTcp(false).createMediaSource(mediaItem);
 
-        SimpleExoPlayer player = new SimpleExoPlayer.Builder(getApplicationContext()).build();
+        Toaster.debug.info(this, "Playing from URI:" + mediaItem.playbackProperties.uri);
+
+        DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(1_000, 10_000, 500, 500).build();
+
+        SimpleExoPlayer player = new ExoPlayer.Builder(getApplicationContext()).setLoadControl(loadControl).build();
         player.setRepeatMode(Player.REPEAT_MODE_OFF);
-        player.prepare(mediaSource);
-        player.setPlayWhenReady(true);
+        player.setMediaSource(mediaSource);
+        player.prepare();
+        player.play();
+
         VideoProcessingGLSurfaceView videoProcessingGLSurfaceView =
                 Assertions.checkNotNull(this.videoProcessingGLSurfaceView);
         videoProcessingGLSurfaceView.setVideoComponent(

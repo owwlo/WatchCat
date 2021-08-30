@@ -18,7 +18,7 @@ public class Constants {
 
     public final static long VIEWER_AUTH_EXP_MS = 1000 * 60;
 
-    public final static String DEFAULT_RTSP_AUTH_USER = "WatchCat";
+    public final static String URI_TOKEN_PREFIX = "TOKEN_";
 
     public final static int PREVIEW_UPDATE_INTERVAL_MS = 60 * 1000;
 }

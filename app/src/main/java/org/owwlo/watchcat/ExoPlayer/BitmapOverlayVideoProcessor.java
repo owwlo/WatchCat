@@ -64,18 +64,9 @@ public class BitmapOverlayVideoProcessor
         GlUtil.Uniform[] uniforms = GlUtil.getUniforms(program);
         for (GlUtil.Attribute attribute : attributes) {
             if (attribute.name.equals("a_position")) {
-                attribute.setBuffer(
-                        new float[]{
-                                -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-                                1.0f, 0.0f, 1.0f,
-                        },
-                        4);
+                attribute.setBuffer(new float[]{-1, -1, 0, 1, 1, -1, 0, 1, -1, 1, 0, 1, 1, 1, 0, 1}, 4);
             } else if (attribute.name.equals("a_texcoord")) {
-                attribute.setBuffer(
-                        new float[]{
-                                0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-                        },
-                        3);
+                attribute.setBuffer(new float[]{0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1}, 4);
             }
         }
         this.attributes = attributes;
@@ -104,7 +95,7 @@ public class BitmapOverlayVideoProcessor
     }
 
     @Override
-    public void draw(int frameTexture, long frameTimestampUs) {
+    public void draw(int frameTexture, long frameTimestampUs, float[] transformMatrix) {
         // Draw to the canvas and store it in a texture.
         String text = "elapsed: " + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
         overlayBitmap.eraseColor(Color.TRANSPARENT);
@@ -132,6 +123,10 @@ public class BitmapOverlayVideoProcessor
                 case "scaleY":
                     uniform.setFloat(bitmapScaleY);
                     break;
+                case "tex_transform":
+                    uniform.setFloats(transformMatrix);
+                    break;
+                default: // fall out
             }
         }
         for (GlUtil.Attribute copyExternalAttribute : attributes) {

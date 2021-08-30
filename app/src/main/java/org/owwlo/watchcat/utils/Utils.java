@@ -1,5 +1,7 @@
 package org.owwlo.watchcat.utils;
 
+import static android.content.Context.WIFI_SERVICE;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.net.wifi.WifiManager;
@@ -30,8 +32,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Pattern;
-
-import static android.content.Context.WIFI_SERVICE;
 
 public class Utils {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
@@ -151,7 +151,7 @@ public class Utils {
         }
 
         public String getCameraStreamingURI(final String accessId) {
-            return "rtsp://" + Constants.DEFAULT_RTSP_AUTH_USER + ":" + accessId + "@" + ip + ":" + streamingPort + "/";
+            return "rtsp://" + ip + ":" + streamingPort + "/" + Constants.URI_TOKEN_PREFIX + accessId + "/";
         }
 
         public String getCameraPreviewURI(final long timestamp) {

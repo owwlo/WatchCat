@@ -22,8 +22,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Base64;
 import android.util.Log;
+
+import com.google.common.base.MoreObjects;
 
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.AuthManager;
@@ -38,7 +39,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
@@ -52,6 +52,10 @@ import java.util.regex.Pattern;
  */
 public class RtspServer extends Service {
     public final static String TAG = RtspServer.class.getSimpleName();
+
+    private static Pattern PATTERN_TAIL_SEMICOLON = Pattern.compile(";$", Pattern.MULTILINE);
+    private static Pattern PATTERN_TRACK = Pattern.compile("trackID=(\\w+)", Pattern.CASE_INSENSITIVE);
+    private static Pattern PATTERN_CLIENT_PORT = Pattern.compile("client_port=(\\d+)(?:-(\\d+))?", Pattern.CASE_INSENSITIVE);
 
     /**
      * The server name that will appear in responses.
@@ -416,7 +420,9 @@ public class RtspServer extends Service {
                                     "Content-Type: application/sdp\r\n";
 
                     response.attributes = requestAttributes;
-                    response.content = requestContent;
+
+                    // TODO: Remove this. ExoPlayer does not support parsing tail semicolon yet.
+                    response.content = PATTERN_TAIL_SEMICOLON.matcher(requestContent).replaceAll("");
 
                     // If no exception has been thrown, we reply with OK
                     response.status = Response.STATUS_OK;
@@ -426,29 +432,22 @@ public class RtspServer extends Service {
                     response.attributes = "Public: DESCRIBE,SETUP,TEARDOWN,PLAY,PAUSE\r\n";
                     response.status = Response.STATUS_OK;
                 } else if (request.method.equalsIgnoreCase("SETUP")) {
-                    Pattern p;
                     Matcher m;
                     int p2, p1, ssrc, trackId, src[];
                     String destination;
 
-                    p = Pattern.compile("trackID=(\\w+)", Pattern.CASE_INSENSITIVE);
-                    m = p.matcher(request.uri);
-
+                    m = PATTERN_TRACK.matcher(request.uri);
                     if (!m.find()) {
                         response.status = Response.STATUS_BAD_REQUEST;
                         return response;
                     }
-
                     trackId = Integer.parseInt(m.group(1));
-
                     if (!mSession.trackExists(trackId)) {
                         response.status = Response.STATUS_NOT_FOUND;
                         return response;
                     }
 
-                    p = Pattern.compile("client_port=(\\d+)(?:-(\\d+))?", Pattern.CASE_INSENSITIVE);
-                    m = p.matcher(request.headers.get("transport"));
-
+                    m = PATTERN_CLIENT_PORT.matcher(request.headers.get("transport"));
                     if (!m.find()) {
                         int[] ports = mSession.getTrack(trackId).getDestinationPorts();
                         p1 = ports[0];
@@ -483,10 +482,6 @@ public class RtspServer extends Service {
                             "Session: " + "1185d20035702ca" + "\r\n" +
                             "Cache-Control: no-cache\r\n";
                     response.status = Response.STATUS_OK;
-
-                    // If no exception has been thrown, we reply with OK
-                    response.status = Response.STATUS_OK;
-
                 }
 
                 /* ********************************************************************************** */
@@ -495,9 +490,9 @@ public class RtspServer extends Service {
                 else if (request.method.equalsIgnoreCase("PLAY")) {
                     String requestAttributes = "RTP-Info: ";
                     if (mSession.trackExists(0))
-                        requestAttributes += "url=rtsp://" + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/trackID=" + 0 + ";seq=0,";
+                        requestAttributes += "url=rtsp://" + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/" + request.token + "/trackID=" + 0 + ";seq=0,";
                     if (mSession.trackExists(1))
-                        requestAttributes += "url=rtsp://" + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/trackID=" + 1 + ";seq=0,";
+                        requestAttributes += "url=rtsp://" + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/" + request.token + "/trackID=" + 1 + ";seq=0,";
                     requestAttributes = requestAttributes.substring(0, requestAttributes.length() - 1) + "\r\nSession: 1185d20035702ca\r\n";
 
                     response.attributes = requestAttributes;
@@ -534,21 +529,14 @@ public class RtspServer extends Service {
         }
 
         private boolean isAuthorized(Request request) {
-            String auth = request.headers.get("authorization");
+            String auth = request.token.substring(Constants.URI_TOKEN_PREFIX.length());
             ServiceDaemon mainService = ServiceDaemon.getInstance();
             if (mainService == null) {
                 return false;
             }
             AuthManager authManager = mainService.getAuthManager();
             if (auth != null && !auth.isEmpty()) {
-                final String receivedBase64 = auth.substring(auth.lastIndexOf(" ") + 1);
-                final String decoded = new String(Base64.decode(receivedBase64, Base64.NO_WRAP), StandardCharsets.UTF_8);
-                final String[] splits = decoded.split(":");
-                if (splits.length != 2 || !splits[0].equals(Constants.DEFAULT_RTSP_AUTH_USER)) {
-                    return false;
-                }
-                final String accessCode = splits[1];
-                return authManager.isAccessGranted(accessCode);
+                return authManager.isAccessGranted(auth);
             }
             return false;
         }
@@ -560,9 +548,11 @@ public class RtspServer extends Service {
         public static final Pattern regexMethod = Pattern.compile("(\\w+) (\\S+) RTSP", Pattern.CASE_INSENSITIVE);
         // Parse a request header
         public static final Pattern rexegHeader = Pattern.compile("(\\S+):(.+)", Pattern.CASE_INSENSITIVE);
+        public static final Pattern REGEX_TOKEN = Pattern.compile("(" + Constants.URI_TOKEN_PREFIX + "[a-zA-Z0-9]+)", Pattern.CASE_INSENSITIVE);
 
-        public String method;
-        public String uri;
+        public String method = null;
+        public String uri = null;
+        public String token = null;
         public HashMap<String, String> headers = new HashMap<>();
 
         /**
@@ -580,6 +570,10 @@ public class RtspServer extends Service {
             request.method = matcher.group(1);
             request.uri = matcher.group(2);
 
+            Matcher tokenMatcher = REGEX_TOKEN.matcher(request.uri);
+            tokenMatcher.find();
+            request.token = tokenMatcher.group(1);
+
             // Parsing headers of the request
             while ((line = input.readLine()) != null && line.length() > 3) {
                 matcher = rexegHeader.matcher(line);
@@ -592,6 +586,16 @@ public class RtspServer extends Service {
             Log.e(TAG, request.method + " " + request.uri);
 
             return request;
+        }
+
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("method", method)
+                    .add("uri", uri)
+                    .add("token", token)
+                    .add("headers", headers)
+                    .toString();
         }
     }
 

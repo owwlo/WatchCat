@@ -68,7 +68,7 @@ public class UriParser {
             // Those parameters must be parsed first or else they won't necessarily be taken into account
             for (String paramName : paramKeys) {
                 String paramValue = params.getAsString(paramName);
-				Log.d(TAG, "request param will be ignored: " + paramName + "=" + paramValue);
+                Log.d(TAG, "request param will be ignored: " + paramName + "=" + paramValue);
             }
         }
 
