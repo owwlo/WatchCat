@@ -1,7 +1,7 @@
-include ':pinlockview'
-include ':SpeedDial'
+include ':libs:pinlockview'
+include ':libs:SpeedDial'
 rootProject.name = 'WatchCat'
-include ':app', ':playerlibrary'
+include ':app'
 
 gradle.ext.exoplayerRoot = getRootDir().toString() + '/libs/ExoPlayer'
 gradle.ext.exoplayerModulePrefix = 'exoplayer-'
