@@ -21,9 +21,11 @@ import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 
+import org.greenrobot.eventbus.EventBus;
 import org.owwlo.watchcat.ExoPlayer.BitmapOverlayVideoProcessor;
 import org.owwlo.watchcat.ExoPlayer.VideoProcessingGLSurfaceView;
 import org.owwlo.watchcat.R;
+import org.owwlo.watchcat.utils.EventBus.VideoPlayerStateChangeEvent;
 import org.owwlo.watchcat.utils.Toaster;
 
 public final class ExoPlayerActivity extends Activity {
@@ -63,6 +65,7 @@ public final class ExoPlayerActivity extends Activity {
                 playerView.onResume();
             }
         }
+        EventBus.getDefault().post(new VideoPlayerStateChangeEvent(VideoPlayerStateChangeEvent.State.PLAYING));
     }
 
     @Override
@@ -89,6 +92,7 @@ public final class ExoPlayerActivity extends Activity {
 
     @Override
     public void onStop() {
+        EventBus.getDefault().post(new VideoPlayerStateChangeEvent(VideoPlayerStateChangeEvent.State.EXITING));
         super.onStop();
         if (Util.SDK_INT > 23) {
             if (playerView != null) {

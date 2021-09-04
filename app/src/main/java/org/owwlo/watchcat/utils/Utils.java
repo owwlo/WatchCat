@@ -8,8 +8,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.Settings;
-
-import com.google.android.exoplayer2.util.Log;
+import android.util.Log;
 
 import org.owwlo.watchcat.BuildConfig;
 import org.owwlo.watchcat.services.CameraDaemon;
