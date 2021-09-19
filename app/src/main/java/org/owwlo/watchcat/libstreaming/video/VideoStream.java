@@ -368,7 +368,11 @@ public abstract class VideoStream extends MediaStream {
                             converter.convert(data, inputBuffers[bufferIndex]);
                         }
                         previewKeeper.tryUpdatePreview(data, camera, mFlipImage);
-                        mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
+                        try {
+                            mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
+                        } catch (IllegalStateException e) {
+                            Log.e(TAG, "Failed to queue buffer, client might be gone.");
+                        }
                     } else {
                         Log.e(TAG, "No buffer available !");
                     }
