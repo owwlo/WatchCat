@@ -1,5 +1,8 @@
 package org.owwlo.watchcat.ui.activities;
 
+import static android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+import static android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF;
+
 import android.Manifest;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -21,13 +24,15 @@ import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.FragmentActivity;
 
+import com.getkeepsafe.taptargetview.TapTarget;
+import com.getkeepsafe.taptargetview.TapTargetView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.karumi.dexter.Dexter;
@@ -43,12 +48,10 @@ import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.EventBus.IncomingAuthorizationCancelEvent;
 import org.owwlo.watchcat.utils.EventBus.IncomingAuthorizationRequestEvent;
+import org.owwlo.watchcat.utils.SharedPreferences;
 
 import java.util.Hashtable;
 import java.util.Map;
-
-import static android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
-import static android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF;
 
 public class CameraActivity extends FragmentActivity implements SurfaceHolder.Callback, View.OnClickListener, SensorEventListener {
     private final static String TAG = CameraActivity.class.getCanonicalName();
@@ -88,52 +91,53 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         }
     }
 
-    private SurfaceView mSurfaceView = null;
-    private FloatingActionButton mBtnSettings = null;
-    private View mBtnToggleCamera = null;
-    private FloatingActionButton mBtnToggleCameraFab = null;
-    private FloatingActionButton mBtnBack = null;
-    private View mStopActionOverlayView = null;
-    private Button mStopActionBtn = null;
-    private SensorManager mSensorManager = null;
+    private SurfaceView surfaceView = null;
+    private FloatingActionButton btnSettings = null;
+    private View btnToggleCamera = null;
+    private FloatingActionButton btnToggleCameraFab = null;
+    private FloatingActionButton btnBack = null;
+    private View stopActionOverlayView = null;
+    private MaterialButton stopActionBtn = null;
+    private SensorManager sensorManager = null;
+    private SharedPreferences sharedPreferences = null;
 
-    private int mLastOrientation = 0;
-    private boolean mLastFlip = false;
+    private int lastOrientation = 0;
+    private boolean lastFlip = false;
 
-    private CameraDaemon mCameraDaemon = null;
-    private ServiceDaemon mServiceDaemon = null;
-    private ServiceConnection mCameraDaemonConnection = new ServiceConnection() {
+    private CameraDaemon cameraDaemon = null;
+    private ServiceDaemon serviceDaemon = null;
+    private ServiceConnection cameraDaemonConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             CameraDaemon.LocalBinder binder = (CameraDaemon.LocalBinder) service;
-            mCameraDaemon = binder.getService();
+            cameraDaemon = binder.getService();
             setPreviewEnable(true);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             setPreviewEnable(false);
-            mCameraDaemon = null;
+            cameraDaemon = null;
         }
     };
-    private ServiceConnection mServiceDaemonConnection = new ServiceConnection() {
+    private ServiceConnection serviceDaemonConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             ServiceDaemon.LocalBinder binder = (ServiceDaemon.LocalBinder) service;
-            mServiceDaemon = binder.getService();
+            serviceDaemon = binder.getService();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            mServiceDaemon = null;
+            serviceDaemon = null;
         }
     };
 
     boolean getFlip() {
         boolean flip = false;
-        switch (mLastOrientation) {
+        switch (lastOrientation) {
             case Surface.ROTATION_180:
             case Surface.ROTATION_270:
                 flip = true;
@@ -144,14 +148,14 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
     private void setPreviewEnable(boolean isEnabled) {
         if (isEnabled) {
-            mCameraDaemon.startPreviewing(mSurfaceView, getFlip());
+            cameraDaemon.startPreviewing(surfaceView, getFlip());
         } else {
-            mCameraDaemon.stopPreviewing();
+            cameraDaemon.stopPreviewing();
         }
     }
 
     private void restartPreviewing() {
-        mCameraDaemon.startPreviewing(mSurfaceView, getFlip());
+        cameraDaemon.startPreviewing(surfaceView, getFlip());
     }
 
     @Override
@@ -161,28 +165,29 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_camera);
-        mSurfaceView = findViewById(R.id.surface);
-        mBtnSettings = findViewById(R.id.camera_setting_button);
-        mBtnToggleCamera = findViewById(R.id.camera_start_serving_button);
-        mBtnToggleCameraFab = findViewById(R.id.camera_start_serving_button_fab);
-        mBtnBack = findViewById(R.id.camera_exit_button);
-        mStopActionOverlayView = findViewById(R.id.stop_overlay);
-        mStopActionBtn = findViewById(R.id.stop_streaming_button);
+        surfaceView = findViewById(R.id.surface);
+        btnSettings = findViewById(R.id.camera_setting_button);
+        btnToggleCamera = findViewById(R.id.camera_start_serving_button);
+        btnToggleCameraFab = findViewById(R.id.camera_start_serving_button_fab);
+        btnBack = findViewById(R.id.camera_exit_button);
+        stopActionOverlayView = findViewById(R.id.stop_overlay);
+        stopActionBtn = findViewById(R.id.stop_streaming_button);
 
-        mBtnSettings.setOnClickListener(this);
-        mBtnToggleCamera.setOnClickListener(this);
-        mBtnToggleCameraFab.setOnClickListener(this);
-        mBtnBack.setOnClickListener(this);
-        mStopActionOverlayView.setOnClickListener(this);
-        mStopActionBtn.setOnClickListener(this);
+        btnSettings.setOnClickListener(this);
+        btnToggleCamera.setOnClickListener(this);
+        btnToggleCameraFab.setOnClickListener(this);
+        btnBack.setOnClickListener(this);
+        stopActionOverlayView.setOnClickListener(this);
+        stopActionBtn.setOnClickListener(this);
 
-        mStopActionOverlayView.setVisibility(View.INVISIBLE);
+        stopActionOverlayView.setVisibility(View.INVISIBLE);
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mSensorManager.registerListener(this,
-                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
                 SensorManager.SENSOR_DELAY_NORMAL);
 
+        sharedPreferences = new SharedPreferences(this);
     }
 
     @Override
@@ -191,7 +196,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
         EventBus.getDefault().register(this);
 
-        mSurfaceView.getHolder().addCallback(this);
+        surfaceView.getHolder().addCallback(this);
 
         Dexter.withContext(this)
                 .withPermissions(
@@ -200,13 +205,13 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
                 ).withListener(new PermissionsListener(this, report -> {
             if (report.areAllPermissionsGranted()) {
                 // TODO do I need to start the service explicitly
-                bindService(new Intent(this, CameraDaemon.class), mCameraDaemonConnection, Context.BIND_AUTO_CREATE);
+                bindService(new Intent(this, CameraDaemon.class), cameraDaemonConnection, Context.BIND_AUTO_CREATE);
             } else {
                 this.finish();
             }
         })).onSameThread().check();
 
-        bindService(new Intent(this, ServiceDaemon.class), mServiceDaemonConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, ServiceDaemon.class), serviceDaemonConnection, Context.BIND_AUTO_CREATE);
     }
 
 
@@ -220,9 +225,9 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     protected void onStop() {
         EventBus.getDefault().unregister(this);
         super.onStop();
-        unbindService(mServiceDaemonConnection);
-        unbindService(mCameraDaemonConnection);
-        mSensorManager.unregisterListener(this);
+        unbindService(serviceDaemonConnection);
+        unbindService(cameraDaemonConnection);
+        sensorManager.unregisterListener(this);
     }
 
     @Override
@@ -243,11 +248,11 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
     @Override
     public void onSensorChanged(SensorEvent event) {
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        if (mCameraDaemon != null && rotation != mLastOrientation) {
+        if (cameraDaemon != null && rotation != lastOrientation) {
             Log.d(TAG, "new rotation: " + rotation);
-            mLastOrientation = rotation;
-            if (mLastFlip != getFlip()) {
-                mLastFlip = getFlip();
+            lastOrientation = rotation;
+            if (lastFlip != getFlip()) {
+                lastFlip = getFlip();
                 restartPreviewing();
             }
         }
@@ -268,17 +273,17 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
                     .setPositiveButton("Done", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            mCameraDaemon.getCameraParams().setSelectedProfile(streamingQualitySpinner.getSelectedItemPosition());
+                            cameraDaemon.getCameraParams().setSelectedProfile(streamingQualitySpinner.getSelectedItemPosition());
                             dialog.dismiss();
                         }
                     })
                     .create();
 
             streamingQualitySpinner = view.findViewById(R.id.spinner_streaming_quality);
-            String[] items = mCameraDaemon.getCameraParams().getSupportedProfilesDesc();
+            String[] items = cameraDaemon.getCameraParams().getSupportedProfilesDesc();
             ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, items);
             streamingQualitySpinner.setAdapter(adapter);
-            streamingQualitySpinner.setSelection(mCameraDaemon.getCameraParams().getSelectedProfileIdx());
+            streamingQualitySpinner.setSelection(cameraDaemon.getCameraParams().getSelectedProfileIdx());
         }
 
         public Dialog getDialog() {
@@ -303,12 +308,9 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
             View view = getLayoutInflater().inflate(R.layout.dialog_passcode, null);
             dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded)
                     .setView(view)
-                    .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            toggleBrightness(true);
-                            activity.passcodeDialogs.remove(incomingId);
-                        }
+                    .setOnDismissListener(dialog -> {
+                        toggleBrightness(true);
+                        activity.passcodeDialogs.remove(incomingId);
                     })
                     .create();
 
@@ -378,7 +380,7 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
         } else {
             int requestedOrientation = 0;
-            switch (mLastOrientation) {
+            switch (lastOrientation) {
                 case Surface.ROTATION_0: {
                     requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
                     break;
@@ -402,15 +404,36 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
     private void toggleCamera(boolean isEnabled) {
         setAllowOrientate(!isEnabled);
-        mStopActionOverlayView.setVisibility(isEnabled ? View.VISIBLE : View.INVISIBLE);
+        stopActionOverlayView.setVisibility(isEnabled ? View.VISIBLE : View.INVISIBLE);
+
+        if (sharedPreferences.getFirstStreaming() && isEnabled) {
+            TapTargetView.showFor(this,
+                    TapTarget.forView(findViewById(R.id.stop_streaming_button),
+                            "Stop the Streaming",
+                            "Whenever you want to stop the streaming. Click here.")
+                            .drawShadow(true)
+                            .cancelable(false)
+                            .tintTarget(true)
+                            .transparentTarget(true)
+                            .targetRadius(60),
+                    new TapTargetView.Listener() {
+                        @Override
+                        public void onTargetClick(TapTargetView view) {
+                            sharedPreferences.setFirstStreaming(false);
+                            toggleBrightness(true);
+                            super.onTargetClick(view);
+                        }
+                    });
+        } else {
+            toggleBrightness(isEnabled);
+        }
         if (isEnabled) {
             setPreviewEnable(false);
-            mCameraDaemon.startStream();
+            cameraDaemon.startStream();
 
         } else {
-            mCameraDaemon.stopStream();
+            cameraDaemon.stopStream();
             setPreviewEnable(true);
         }
-        toggleBrightness(isEnabled);
     }
 }

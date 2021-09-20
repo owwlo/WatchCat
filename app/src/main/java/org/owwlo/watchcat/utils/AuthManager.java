@@ -1,6 +1,6 @@
 package org.owwlo.watchcat.utils;
 
-import com.google.android.exoplayer2.util.Log;
+import android.util.Log;
 
 import org.owwlo.watchcat.model.Viewer;
 import org.owwlo.watchcat.model.ViewerDao;
