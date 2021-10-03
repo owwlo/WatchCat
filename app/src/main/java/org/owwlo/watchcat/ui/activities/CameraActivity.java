@@ -7,7 +7,6 @@ import android.Manifest;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
@@ -82,8 +81,8 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
         private void showDialog() {
             new AlertDialog.Builder(context)
-                    .setTitle("Permissions Require")
-                    .setMessage("Camera & Audio: required to record the live stream; Storage: required to store the thumbnail.")
+                    .setTitle(R.string.permission_require_dialog_title)
+                    .setMessage(R.string.permission_require_dialog_text)
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                         dialog.dismiss();
                     })
@@ -268,14 +267,11 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
 
         public CameraSettingsDialog(CameraActivity activity) {
             View view = getLayoutInflater().inflate(R.layout.dialog_camera_mode_settings, null, false);
-            dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.fab_authorization)
+            dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.streaming_settings_dialog_title)
                     .setView(view)
-                    .setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            cameraDaemon.getCameraParams().setSelectedProfile(streamingQualitySpinner.getSelectedItemPosition());
-                            dialog.dismiss();
-                        }
+                    .setPositiveButton(R.string.done_button_text, (dialog, which) -> {
+                        cameraDaemon.getCameraParams().setSelectedProfile(streamingQualitySpinner.getSelectedItemPosition());
+                        dialog.dismiss();
                     })
                     .create();
 
@@ -409,8 +405,8 @@ public class CameraActivity extends FragmentActivity implements SurfaceHolder.Ca
         if (sharedPreferences.getFirstStreaming() && isEnabled) {
             TapTargetView.showFor(this,
                     TapTarget.forView(findViewById(R.id.stop_streaming_button),
-                            "Stop the Streaming",
-                            "Whenever you want to stop the streaming. Click here.")
+                            getString(R.string.stop_streaming_button_text),
+                            getString(R.string.stop_streaming_button_desc_text))
                             .drawShadow(true)
                             .cancelable(false)
                             .tintTarget(true)

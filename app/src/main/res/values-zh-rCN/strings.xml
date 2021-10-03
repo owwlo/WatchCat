@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WatchCat</string>
+    <string name="password_hint">设置访问验证码</string>
+    <string name="error_no_stream_selected">无法打开请求的媒体流</string>
+    <string name="fab_authorization">访问管理</string>
+    <string name="stop_streaming_button_text">停止直播</string>
+    <string name="stop_streaming_button_desc_text">当您想停止直播时，请点击这里</string>
+    <string name="done_button_text">完成</string>
+    <string name="permission_require_dialog_title">权限申请</string>
+    <string name="permission_require_dialog_text">相机与麦克风：需要在直播时使用；存储：用于储存缩略图</string>
+    <string name="permission_require_dialog2_text">蓝牙：用于获得设备ID</string>
+    <string name="wrong_passcode_input_message">验证码错误</string>
+    <string name="streaming_player_elapsed_prefix_text">已直播时间：</string>
+    <string name="camera_access_request_dialog_title">远程访问验证码</string>
+    <string name="access_code">访问验证码</string>
+    <string name="empty_granted_access_list_placeholder">没有允许访问的远程设备</string>
+    <string name="no_camera_found_in_network_activity_placeholder">未侦测到网络内的监控设备</string>
+    <string name="cam_mode_button_text">直播模式</string>
+    <string name="enable_camera_button_text">启动直播</string>
+    <string name="streaming_settings_dialog_title">直播设置</string>
+    <string name="streaming_quality_setting_text">直播画质：</string>
+</resources>

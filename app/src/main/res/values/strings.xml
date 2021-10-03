@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WatchCat</string>
+    <string name="app_name" translatable="false">WatchCat</string>
     <string name="password_hint">Set Access Password</string>
-    <string name="title_activity_main_screen">MainScreen</string>
-
-    <string name="title_activity_camera_viewer">CameraViewer</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-
-    <string name="application_name">WatchCat Player</string>
     <string name="error_no_stream_selected">No stream is selected.</string>
-
-    <string name="btn_confirm">Apply</string>
-    <string name="btn_cancel">Cancel</string>
-
     <string name="fab_authorization">Access Management</string>
-    <string name="title_passcode">PassCode</string>
+    <string name="stop_streaming_button_text">Stop the Streaming</string>
+    <string name="stop_streaming_button_desc_text">Whenever you want to stop the streaming. Click here.</string>
+    <string name="done_button_text">Done</string>
+    <string name="permission_require_dialog_title">Permissions Require</string>
+    <string name="permission_require_dialog_text">Camera &amp; Audio: required to record the live stream; Storage: required to store the thumbnail.</string>
+    <string name="permission_require_dialog2_text">Bluetooth permission is needed to get the device ID.</string>
+    <string name="wrong_passcode_input_message">Access Denied!</string>
+    <string name="streaming_player_elapsed_prefix_text">Elapsed: </string>
+    <string name="camera_access_request_dialog_title">Camera Access Request</string>
+    <string name="access_code">Access Code</string>
+    <string name="empty_granted_access_list_placeholder">No Granted Access</string>
+    <string name="no_camera_found_in_network_activity_placeholder">No Camera found in network.</string>
+    <string name="cam_mode_button_text">CamMode</string>
+    <string name="enable_camera_button_text">Enable Camera</string>
+    <string name="streaming_settings_dialog_title">Streaming Settings</string>
+    <string name="streaming_quality_setting_text">Streaming Quality:</string>
 </resources>

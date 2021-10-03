@@ -14,7 +14,7 @@
         android:fontFamily="sans-serif-thin"
         android:gravity="center"
         android:maxLines="1"
-        android:text="Access Code"
+        android:text="@string/access_code"
         android:textColor="@color/white"
         android:textSize="22sp" />
 

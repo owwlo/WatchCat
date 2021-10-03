@@ -117,7 +117,7 @@
                     android:paddingTop="10dp"
                     android:paddingRight="10dp"
                     android:paddingBottom="10dp"
-                    android:text="Enable Camera"
+                    android:text="@string/enable_camera_button_text"
                     android:textColor="#FAFAFA"
                     android:textStyle="bold" />
             </LinearLayout>

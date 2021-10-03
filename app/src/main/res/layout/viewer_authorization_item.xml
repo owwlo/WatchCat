@@ -15,8 +15,7 @@
         android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:paddingRight="2dp"
-        android:singleLine="true"
-        android:text="TextView" />
+        android:singleLine="true" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_revoke_access"

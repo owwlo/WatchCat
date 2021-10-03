@@ -67,7 +67,7 @@
                 android:paddingTop="10dp"
                 android:paddingRight="10dp"
                 android:paddingBottom="10dp"
-                android:text="CamMode"
+                android:text="@string/cam_mode_button_text"
                 android:textColor="?colorOnPrimary"
                 android:textStyle="bold" />
         </LinearLayout>

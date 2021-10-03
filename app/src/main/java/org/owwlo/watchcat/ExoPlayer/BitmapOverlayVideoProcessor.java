@@ -15,6 +15,8 @@ import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.GlUtil;
 import com.google.android.exoplayer2.util.Util;
 
+import org.owwlo.watchcat.R;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
@@ -97,7 +99,7 @@ public class BitmapOverlayVideoProcessor
     @Override
     public void draw(int frameTexture, long frameTimestampUs, float[] transformMatrix) {
         // Draw to the canvas and store it in a texture.
-        String text = "elapsed: " + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
+        String text = R.string.streaming_player_elapsed_prefix_text + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
         overlayBitmap.eraseColor(Color.TRANSPARENT);
         overlayCanvas.drawText(text, /* x= */ 50, /* y= */ 50, paint);
         GLES20.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);

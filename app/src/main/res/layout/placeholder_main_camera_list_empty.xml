@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="No Camera found in network."
+        android:text="@string/no_camera_found_in_network_activity_placeholder"
         android:textSize="22sp"
         android:textStyle="bold" />
 

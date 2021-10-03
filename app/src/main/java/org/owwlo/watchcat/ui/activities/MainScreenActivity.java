@@ -190,7 +190,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
     @Subscribe(threadMode = ThreadMode.MAIN_ORDERED)
     public void onMessageEvent(OutgoingAuthorizationResultEvent event) {
         if (event.getResult() == AuthResult.kRESULT_DENIED) {
-            passcodeInputDialog.error("Access Denied!");
+            passcodeInputDialog.error(getString(R.string.wrong_passcode_input_message));
         } else if (event.getResult() == AuthResult.kRESULT_NEW_AUTH) {
             passcodeInputDialog.newInput(event.getCamera());
         } else if (event.getResult() == AuthResult.kRESULT_GRANTED) {
@@ -248,8 +248,8 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
         private void showDialog() {
             new AlertDialog.Builder(context)
-                    .setTitle("Permissions Require")
-                    .setMessage("Bluetooth permission is needed to get the device ID.")
+                    .setTitle(R.string.permission_require_dialog_title)
+                    .setMessage(R.string.permission_require_dialog2_text)
                     .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                         dialog.dismiss();
                     })
@@ -408,12 +408,7 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
             View view = getLayoutInflater().inflate(R.layout.dialog_authorization_management, null);
             dialog = new MaterialAlertDialogBuilder(activity, R.style.ThemeOverlay_MaterialAlertDialog_Rounded).setTitle(R.string.fab_authorization)
                     .setView(view)
-                    .setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    })
+                    .setPositiveButton(getString(R.string.done_button_text), (dialog, which) -> dialog.dismiss())
                     .create();
 
             EmptyRecyclerView itemRecyclerList = view.findViewById(R.id.authorization_recycler_view);
