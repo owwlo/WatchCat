@@ -13,12 +13,10 @@ import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.GlUtil;
-import com.google.android.exoplayer2.util.Util;
 
 import org.owwlo.watchcat.R;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -57,10 +55,15 @@ public class BitmapOverlayVideoProcessor
 
     @Override
     public void initialize() {
-        String vertexShaderCode =
-                loadAssetAsString(context, "bitmap_overlay_video_processor_vertex.glsl");
-        String fragmentShaderCode =
-                loadAssetAsString(context, "bitmap_overlay_video_processor_fragment.glsl");
+        String vertexShaderCode;
+        String fragmentShaderCode;
+        try {
+            vertexShaderCode = GlUtil.loadAsset(context, "bitmap_overlay_video_processor_vertex.glsl");
+            fragmentShaderCode =
+                    GlUtil.loadAsset(context, "bitmap_overlay_video_processor_fragment.glsl");
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
         program = GlUtil.compileProgram(vertexShaderCode, fragmentShaderCode);
         GlUtil.Attribute[] attributes = GlUtil.getAttributes(program);
         GlUtil.Uniform[] uniforms = GlUtil.getUniforms(program);
@@ -99,7 +102,7 @@ public class BitmapOverlayVideoProcessor
     @Override
     public void draw(int frameTexture, long frameTimestampUs, float[] transformMatrix) {
         // Draw to the canvas and store it in a texture.
-        String text = R.string.streaming_player_elapsed_prefix_text + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
+        String text = this.context.getString(R.string.streaming_player_elapsed_prefix_text) + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
         overlayBitmap.eraseColor(Color.TRANSPARENT);
         overlayCanvas.drawText(text, /* x= */ 50, /* y= */ 50, paint);
         GLES20.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
@@ -140,17 +143,5 @@ public class BitmapOverlayVideoProcessor
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, /* first= */ 0, /* count= */ 4);
         GlUtil.checkGlError();
-    }
-
-    private static String loadAssetAsString(Context context, String assetFileName) {
-        @Nullable InputStream inputStream = null;
-        try {
-            inputStream = context.getAssets().open(assetFileName);
-            return Util.fromUtf8Bytes(Util.toByteArray(inputStream));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        } finally {
-            Util.closeQuietly(inputStream);
-        }
     }
 }

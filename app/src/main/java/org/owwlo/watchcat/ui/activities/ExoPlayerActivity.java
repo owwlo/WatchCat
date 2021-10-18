@@ -124,7 +124,7 @@ public final class ExoPlayerActivity extends Activity {
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(1_000, 10_000, 500, 500).build();
 
-        SimpleExoPlayer player = new ExoPlayer.Builder(getApplicationContext()).setLoadControl(loadControl).build();
+        SimpleExoPlayer player = new ExoPlayer.Builder(getApplicationContext()).setLoadControl(loadControl).buildExoPlayer();
         player.setRepeatMode(Player.REPEAT_MODE_OFF);
         player.setMediaSource(mediaSource);
         player.prepare();
