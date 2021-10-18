@@ -67,7 +67,6 @@ public class Utils {
                 return InetAddress.getByAddress(ipByteArray);
             } catch (UnknownHostException ex) {
             }
-            return null;
         }
 
         List<InetAddress> ips = getLocalIPAddresses();
