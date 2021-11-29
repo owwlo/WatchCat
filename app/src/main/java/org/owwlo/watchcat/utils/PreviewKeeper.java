@@ -43,9 +43,9 @@ public class PreviewKeeper {
     }
 
 
-    public synchronized void tryUpdatePreview(byte[] previewBytes, Camera camera, boolean flip) {
+    public synchronized void tryUpdatePreview(byte[] previewBytes, Camera camera, boolean flip, boolean forceToTake) {
         long now = System.currentTimeMillis();
-        if (now - lastPreviewTime > Constants.PREVIEW_UPDATE_INTERVAL_MS) {
+        if (forceToTake || (now - lastPreviewTime > Constants.PREVIEW_UPDATE_INTERVAL_MS)) {
             previewData = previewBytes;
             cameraParameters = camera.getParameters();
             needToFlip = flip;

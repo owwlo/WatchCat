@@ -289,9 +289,12 @@ public abstract class VideoStream extends MediaStream {
             updateCamera();
         }
         Camera.PreviewCallback callback = new Camera.PreviewCallback() {
+            private boolean initPreviewTaken = false;
+
             @Override
             public void onPreviewFrame(byte[] data, Camera camera) {
-                previewKeeper.tryUpdatePreview(data, camera, mFlipImage);
+                previewKeeper.tryUpdatePreview(data, camera, mFlipImage, !initPreviewTaken);
+                initPreviewTaken = true;
             }
         };
         mCamera.setPreviewCallback(callback);
@@ -367,7 +370,7 @@ public abstract class VideoStream extends MediaStream {
                             flipFilter(data, width, height);
                             converter.convert(data, inputBuffers[bufferIndex]);
                         }
-                        previewKeeper.tryUpdatePreview(data, camera, mFlipImage);
+                        previewKeeper.tryUpdatePreview(data, camera, mFlipImage, false);
                         try {
                             mMediaCodec.queueInputBuffer(bufferIndex, 0, inputBuffers[bufferIndex].position(), now, 0);
                         } catch (IllegalStateException e) {
