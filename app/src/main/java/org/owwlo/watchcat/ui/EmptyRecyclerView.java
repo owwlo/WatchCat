@@ -29,6 +29,7 @@ public class EmptyRecyclerView extends RecyclerView {
 
     public EmptyRecyclerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        this.setItemAnimator(null);
     }
 
     void checkIfEmpty() {
