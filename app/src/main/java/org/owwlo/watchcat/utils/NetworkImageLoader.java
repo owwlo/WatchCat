@@ -41,7 +41,7 @@ public class NetworkImageLoader {
 
                             @Override
                             public void putBitmap(String url, Bitmap bitmap) {
-                                Toaster.debug.info(ctx, "Loaded new image from: " + url);
+                                Toaster.debug.info("Loaded new image from: " + url);
                                 lruCache.put(url, bitmap);
                             }
                         });

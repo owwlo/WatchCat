@@ -111,7 +111,7 @@ public class CameraDaemon extends Service implements Session.Callback {
 
         mStreamingPort = Utils.getAvailablePort(Constants.DEFAULT_STREAMING_PORT);
 
-        Toaster.debug.info(this, "CameraDaemon started port: " + mStreamingPort);
+        Toaster.debug.info( "CameraDaemon started port: " + mStreamingPort);
 
         cameraParams = new CameraParams();
 

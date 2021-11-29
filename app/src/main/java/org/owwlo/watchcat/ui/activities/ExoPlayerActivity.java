@@ -119,7 +119,7 @@ public final class ExoPlayerActivity extends Activity {
         MediaItem mediaItem = MediaItem.fromUri(uri);
         RtspMediaSource mediaSource = new RtspMediaSource.Factory().setDebugLoggingEnabled(true).setForceUseRtpTcp(false).createMediaSource(mediaItem);
 
-        Toaster.debug.info(this, "Playing from URI:" + mediaItem.playbackProperties.uri);
+        Toaster.debug.info("Playing from URI:" + mediaItem.playbackProperties.uri);
 
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(1_000, 10_000, 500, 500).build();

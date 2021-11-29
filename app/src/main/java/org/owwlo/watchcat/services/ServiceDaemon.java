@@ -389,8 +389,6 @@ public class ServiceDaemon extends Service implements NsdListener {
     @Override
     public void onCreate() {
         super.onCreate();
-        Utils.sContext = this;
-
         EventBus.getDefault().register(this);
 
         database = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "watchcat")

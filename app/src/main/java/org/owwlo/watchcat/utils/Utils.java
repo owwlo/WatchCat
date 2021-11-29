@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import org.owwlo.watchcat.BuildConfig;
+import org.owwlo.watchcat.WatchCatApp;
 import org.owwlo.watchcat.services.CameraDaemon;
 
 import java.io.IOException;
@@ -34,8 +35,6 @@ import java.util.regex.Pattern;
 
 public class Utils {
     private final static String TAG = CameraDaemon.class.getCanonicalName();
-
-    public static Context sContext = null;
 
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "^(" + "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}" +
@@ -219,9 +218,9 @@ public class Utils {
         }
         final List<String> nameKeys = Arrays.asList("bluetooth_name", "device_name", "lock_screen_owner_info");
         for (final String key : nameKeys) {
-            String pending = Settings.System.getString(sContext.getContentResolver(), key);
+            String pending = Settings.System.getString(WatchCatApp.sContext.getContentResolver(), key);
             if (pending != null) return pending;
-            pending = Settings.Secure.getString(sContext.getContentResolver(), key);
+            pending = Settings.Secure.getString(WatchCatApp.sContext.getContentResolver(), key);
             if (pending != null) return pending;
         }
         return "Unknown Device";
