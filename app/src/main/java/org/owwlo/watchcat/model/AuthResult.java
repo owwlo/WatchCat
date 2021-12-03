@@ -9,6 +9,7 @@ public class AuthResult implements Parcelable {
     public static final int kRESULT_GRANTED = 0;
     public static final int kRESULT_DENIED = 1;
     public static final int kRESULT_NEW_AUTH = 2;
+    public static final int kRESULT_REACHED_MAX_VIEWER = 3;
 
     @JSONField(name = "result")
     private int result = kRESULT_DENIED;

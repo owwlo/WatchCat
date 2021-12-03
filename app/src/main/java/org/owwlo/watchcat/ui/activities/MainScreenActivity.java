@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
@@ -59,6 +58,7 @@ import org.owwlo.watchcat.utils.Constants;
 import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationRequestEvent;
 import org.owwlo.watchcat.utils.EventBus.OutgoingAuthorizationResultEvent;
 import org.owwlo.watchcat.utils.EventBus.PinInputDoneEvent;
+import org.owwlo.watchcat.utils.Toaster;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,6 +193,9 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
             passcodeInputDialog.error(getString(R.string.wrong_passcode_input_message));
         } else if (event.getResult() == AuthResult.kRESULT_NEW_AUTH) {
             passcodeInputDialog.newInput(event.getCamera());
+        } else if (event.getResult() == AuthResult.kRESULT_REACHED_MAX_VIEWER) {
+            passcodeInputDialog.close();
+            Toaster.error(getString(R.string.max_viewers_reached));
         } else if (event.getResult() == AuthResult.kRESULT_GRANTED) {
             passcodeInputDialog.close();
 

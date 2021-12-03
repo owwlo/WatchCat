@@ -20,4 +20,5 @@
     <string name="enable_camera_button_text">Enable Camera</string>
     <string name="streaming_settings_dialog_title">Streaming Settings</string>
     <string name="streaming_quality_setting_text">Streaming Quality:</string>
+    <string name="max_viewers_reached">Max Viewer Count Reached.</string>>
 </resources>

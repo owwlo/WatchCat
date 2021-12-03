@@ -21,4 +21,6 @@ public class Constants {
     public final static String URI_TOKEN_PREFIX = "TOKEN_";
 
     public final static int PREVIEW_UPDATE_INTERVAL_MS = 10 * 1000;
+
+    public final static int MAX_VIEWER = 1;
 }

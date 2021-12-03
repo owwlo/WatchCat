@@ -65,6 +65,7 @@ public class SessionBuilder {
     private String mOrigin = null;
     private String mDestination = null;
     private Session.Callback mCallback = null;
+    private String auth = "";
 
     // Removes the default public constructor
     private SessionBuilder() {
@@ -103,6 +104,7 @@ public class SessionBuilder {
         session.setDestination(mDestination);
         session.setTimeToLive(mTimeToLive);
         session.setCallback(mCallback);
+        session.setAuth(auth);
 
         switch (mAudioEncoder) {
             case AUDIO_AAC:
@@ -222,6 +224,11 @@ public class SessionBuilder {
         return this;
     }
 
+    public SessionBuilder setAuth(String auth) {
+        this.auth = auth;
+        return this;
+    }
+
     /**
      * Returns the context set with {@link #setContext(Context)}
      */
@@ -252,7 +259,8 @@ public class SessionBuilder {
                 .setAudioEncoder(mAudioEncoder)
                 .setAudioQuality(mAudioQuality)
                 .setContext(mContext)
-                .setCallback(mCallback);
+                .setCallback(mCallback)
+                .setAuth(auth);
     }
 
 }

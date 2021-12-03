@@ -18,13 +18,7 @@
 
 package org.owwlo.watchcat.libstreaming;
 
-import android.content.ContentValues;
-import android.util.Log;
-
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.util.Set;
 
 /**
  * This class parses URIs received by the RTSP server and configures a Session accordingly.
@@ -43,35 +37,9 @@ public class UriParser {
      * @throws IllegalStateException
      * @throws IOException
      */
-    public static Session parse(String uri) throws IllegalStateException, IOException {
+    public static Session parse(String uri, String auth) throws IllegalStateException, IOException {
         SessionBuilder builder = SessionBuilder.getInstance().clone();
-
-        String query = URI.create(uri).getQuery();
-        String[] queryParams = query == null ? new String[0] : query.split("&");
-        ContentValues params = new ContentValues();
-        for (String param : queryParams) {
-            String[] keyValue = param.split("=");
-            String value = "";
-            try {
-                value = keyValue[1];
-            } catch (ArrayIndexOutOfBoundsException e) {
-            }
-
-            params.put(
-                    URLEncoder.encode(keyValue[0], "UTF-8"), // Name
-                    URLEncoder.encode(value, "UTF-8")  // Value
-            );
-        }
-
-        if (params.size() > 0) {
-            Set<String> paramKeys = params.keySet();
-            // Those parameters must be parsed first or else they won't necessarily be taken into account
-            for (String paramName : paramKeys) {
-                String paramValue = params.getAsString(paramName);
-                Log.d(TAG, "request param will be ignored: " + paramName + "=" + paramValue);
-            }
-        }
-
+        builder.setAuth(auth);
         Session session = builder.build();
         return session;
 

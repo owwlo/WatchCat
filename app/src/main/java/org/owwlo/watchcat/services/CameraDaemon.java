@@ -14,6 +14,7 @@ import org.owwlo.watchcat.libstreaming.Session;
 import org.owwlo.watchcat.libstreaming.SessionBuilder;
 import org.owwlo.watchcat.libstreaming.gl.SurfaceView;
 import org.owwlo.watchcat.utils.Constants;
+import org.owwlo.watchcat.utils.Hodor;
 import org.owwlo.watchcat.utils.Toaster;
 import org.owwlo.watchcat.utils.Utils;
 
@@ -28,8 +29,8 @@ public class CameraDaemon extends Service implements Session.Callback {
 
     private static CameraDaemon sInstance = null;
     private Session mCurrentSession = null;
-    private String mAccessPassword = "";
     private int mStreamingPort = Constants.DEFAULT_STREAMING_PORT;
+    private Hodor hodor = new Hodor(Constants.MAX_VIEWER);
 
     // Binding starts
     private final IBinder binder = new LocalBinder();
@@ -111,7 +112,7 @@ public class CameraDaemon extends Service implements Session.Callback {
 
         mStreamingPort = Utils.getAvailablePort(Constants.DEFAULT_STREAMING_PORT);
 
-        Toaster.debug.info( "CameraDaemon started port: " + mStreamingPort);
+        Toaster.debug.info("CameraDaemon started port: " + mStreamingPort);
 
         cameraParams = new CameraParams();
 
@@ -219,5 +220,9 @@ public class CameraDaemon extends Service implements Session.Callback {
 
     public static ServiceDaemon.RUNNING_MODE getRunningMode() {
         return mMode;
+    }
+
+    public Hodor getHodor() {
+        return hodor;
     }
 }

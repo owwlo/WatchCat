@@ -8,6 +8,7 @@ import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.model.GeneralNetworkResponse;
 import org.owwlo.watchcat.model.Viewer;
 import org.owwlo.watchcat.model.ViewerPasscode;
+import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.EventBus.IncomingAuthorizationCancelEvent;
 
@@ -69,6 +70,14 @@ public class WebServer extends NanoHTTPD {
         }
     }
 
+    private boolean registerWithHodor(String id) {
+        CameraDaemon daemon = CameraDaemon.getInstance();
+        if (daemon == null) {
+            return false;
+        }
+        return daemon.getHodor().register(id);
+    }
+
     @Override
     public Response serve(IHTTPSession session) {
         final String remoteIp = session.getRemoteIpAddress();
@@ -110,7 +119,7 @@ public class WebServer extends NanoHTTPD {
 
                 AuthResult result = new AuthResult(AuthResult.kRESULT_DENIED);
                 if (authManager.isAccessGranted(viewer.getId())) {
-                    result.setResult(AuthResult.kRESULT_GRANTED);
+                    result.setResult(registerWithHodor(viewer.getId()) ? AuthResult.kRESULT_GRANTED : AuthResult.kRESULT_REACHED_MAX_VIEWER);
                 } else {
                     result.setResult(AuthResult.kRESULT_NEW_AUTH);
                     EventBus.getDefault().post(authManager.newAuth(viewer.getId(), viewer.getName()));
@@ -125,7 +134,7 @@ public class WebServer extends NanoHTTPD {
                 ViewerPasscode passcode = JsonUtils.parseJson(postBody, ViewerPasscode.class);
                 Viewer viewer = authManager.auth(passcode.getId(), passcode.getPasscode());
                 if (viewer != null) {
-                    result.setResult(AuthResult.kRESULT_GRANTED);
+                    result.setResult(registerWithHodor(viewer.getId()) ? AuthResult.kRESULT_GRANTED : AuthResult.kRESULT_REACHED_MAX_VIEWER);
                     EventBus.getDefault().post(new IncomingAuthorizationCancelEvent(passcode.getId()));
                 }
                 return newFixedLengthResponse(Response.Status.OK, kMIME_JSON, JsonUtils.toJson(result));

@@ -425,7 +425,10 @@ public abstract class VideoStream extends MediaStream {
                     exception[0] = e;
                 } finally {
                     lock.release();
-                    Looper.loop();
+                    try {
+                        Looper.loop();
+                    } catch (Exception e) {
+                    }
                 }
             }
         });

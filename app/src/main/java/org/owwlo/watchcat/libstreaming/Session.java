@@ -112,8 +112,18 @@ public class Session {
 
     private Callback mCallback;
     private Handler mMainHandler;
-
     private Handler mHandler;
+
+    public String getAuth() {
+        return auth;
+    }
+
+    public void setAuth(String auth) {
+        this.auth = auth;
+    }
+
+    private String auth = "";
+
 
     /**
      * Creates a streaming session that can be customized by adding tracks.

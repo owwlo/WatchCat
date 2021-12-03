@@ -26,9 +26,11 @@ import android.util.Log;
 
 import com.google.common.base.MoreObjects;
 
+import org.owwlo.watchcat.services.CameraDaemon;
 import org.owwlo.watchcat.services.ServiceDaemon;
 import org.owwlo.watchcat.utils.AuthManager;
 import org.owwlo.watchcat.utils.Constants;
+import org.owwlo.watchcat.utils.Hodor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -212,7 +214,7 @@ public class RtspServer extends Service {
         mEnabled = true;
 
         start();
-        return START_STICKY;
+        return START_REDELIVER_INTENT;
     }
 
     @Override
@@ -267,8 +269,8 @@ public class RtspServer extends Service {
      * @param client The socket associated to the client
      * @return A proper session
      */
-    protected Session handleRequest(String uri, Socket client) throws IllegalStateException, IOException {
-        Session session = UriParser.parse(uri);
+    protected Session handleRequest(String uri, String auth, Socket client) throws IllegalStateException, IOException {
+        Session session = UriParser.parse(uri, auth);
         session.setOrigin(client.getLocalAddress().getHostAddress());
         if (session.getDestination() == null) {
             session.setDestination(client.getInetAddress().getHostAddress());
@@ -389,44 +391,47 @@ public class RtspServer extends Service {
                 postMessage(MESSAGE_STREAMING_STOPPED);
             }
             mSession.release();
-
+            CameraDaemon.getInstance().getHodor().remove(mSession.getAuth());
             try {
                 mClient.close();
             } catch (IOException ignore) {
             }
-
             Log.i(TAG, "Client disconnected");
-
         }
 
         public Response processRequest(Request request) throws IllegalStateException, IOException {
             Response response = new Response(request);
 
-            //Ask for authorization unless this is an OPTIONS request
-            if (!isAuthorized(request) && !request.method.equalsIgnoreCase("OPTIONS")) {
+            String auth = request.token.substring(Constants.URI_TOKEN_PREFIX.length());
+            if (!isAuthorized(auth) && !request.method.equalsIgnoreCase("OPTIONS")) {
                 response.attributes = "WWW-Authenticate: Basic realm=\"" + SERVER_NAME + "\"\r\n";
                 response.status = Response.STATUS_UNAUTHORIZED;
             } else {
                 if (request.method.equalsIgnoreCase("DESCRIBE")) {
+                    CameraDaemon cameraDaemon = CameraDaemon.getInstance();
+                    Hodor hodor = cameraDaemon.getHodor();
+                    if (hodor.isAllow(auth)) {
+                        // Parse the requested URI and configure the session
+                        mSession = handleRequest(request.uri, auth, mClient);
+                        hodor.makePermanent(auth);
+                        mSessions.put(mSession, null);
+                        mSession.syncConfigure();
 
-                    // Parse the requested URI and configure the session
-                    mSession = handleRequest(request.uri, mClient);
-                    mSessions.put(mSession, null);
-                    mSession.syncConfigure();
+                        String requestContent = mSession.getSessionDescription();
+                        String requestAttributes =
+                                "Content-Base: " + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/\r\n" +
+                                        "Content-Type: application/sdp\r\n";
 
-                    String requestContent = mSession.getSessionDescription();
-                    String requestAttributes =
-                            "Content-Base: " + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/\r\n" +
-                                    "Content-Type: application/sdp\r\n";
+                        response.attributes = requestAttributes;
 
-                    response.attributes = requestAttributes;
+                        // TODO: Remove this. ExoPlayer does not support parsing tail semicolon yet.
+                        response.content = PATTERN_TAIL_SEMICOLON.matcher(requestContent).replaceAll("");
 
-                    // TODO: Remove this. ExoPlayer does not support parsing tail semicolon yet.
-                    response.content = PATTERN_TAIL_SEMICOLON.matcher(requestContent).replaceAll("");
-
-                    // If no exception has been thrown, we reply with OK
-                    response.status = Response.STATUS_OK;
-
+                        // If no exception has been thrown, we reply with OK
+                        response.status = Response.STATUS_OK;
+                    } else {
+                        response.status = Response.STATUS_FORBIDDEN;
+                    }
                 } else if (request.method.equalsIgnoreCase("OPTIONS")) {
                     response.status = Response.STATUS_OK;
                     response.attributes = "Public: DESCRIBE,SETUP,TEARDOWN,PLAY,PAUSE\r\n";
@@ -528,8 +533,7 @@ public class RtspServer extends Service {
 
         }
 
-        private boolean isAuthorized(Request request) {
-            String auth = request.token.substring(Constants.URI_TOKEN_PREFIX.length());
+        private boolean isAuthorized(String auth) {
             ServiceDaemon mainService = ServiceDaemon.getInstance();
             if (mainService == null) {
                 return false;
@@ -605,6 +609,7 @@ public class RtspServer extends Service {
         public static final String STATUS_OK = "200 OK";
         public static final String STATUS_BAD_REQUEST = "400 Bad Request";
         public static final String STATUS_UNAUTHORIZED = "401 Unauthorized";
+        public static final String STATUS_FORBIDDEN = "403 Forbidden";
         public static final String STATUS_NOT_FOUND = "404 Not Found";
         public static final String STATUS_INTERNAL_SERVER_ERROR = "500 Internal Server Error";
 
