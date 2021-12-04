@@ -59,6 +59,10 @@ features                                  :
     description                           : Passcode is required on the initial pairing process. Paired devices can be removed from the Access panel.
     fontawesome_icon_name                 : key
 
+  - title                                 : Catchphrase!
+    description                           : There are 3 things I love in life:<br/>1. Kicking @ss<br/>2. TBD<br/>3. Insert 3rd thing here
+    fontawesome_icon_name                 : smile-wink
+
 
 # Theme Settings
 topbar_color                              : "#000000"
