@@ -220,8 +220,12 @@ public class MainScreenActivity extends Activity implements View.OnClickListener
 
         Log.d(TAG, "dpHeight: " + dpHeight + ", dpWidth: " + dpWidth);
 
-        final float dpItemWidth = Math.min(dpWidth, Constants.PREVIEW_DEFAULT_WIDTH_IN_DP);
-        return Math.round(dpWidth / dpItemWidth);
+        float effectiveWidth = Constants.PREVIEW_DEFAULT_WIDTH_IN_DP;
+        if (dpHeight < Constants.PREVIEW_DEFAULT_HEIGHT_IN_DP) {
+            effectiveWidth = effectiveWidth / Constants.PREVIEW_DEFAULT_HEIGHT_IN_DP * dpHeight;
+        }
+        final float dpItemWidth = Math.min(dpWidth, effectiveWidth);
+        return (int) Math.ceil(dpWidth / dpItemWidth);
     }
 
     // TODO extract into a new class

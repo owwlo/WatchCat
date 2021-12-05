@@ -4,7 +4,8 @@ public class Constants {
     public final static int WATCHCAT_API_VER = 1;
 
     public final static int DEFAULT_STREAMING_PORT = 57526;
-    public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 310;
+    public final static int PREVIEW_DEFAULT_WIDTH_IN_DP = 480;
+    public final static int PREVIEW_DEFAULT_HEIGHT_IN_DP = 320 + 60;
 
     public final static int NSD_TIMEOUT_SECS = 10;
     public final static int NSD_CHECKALIVE_INTERVAL_MS = 10 * 1000;
