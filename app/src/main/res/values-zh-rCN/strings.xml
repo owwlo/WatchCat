@@ -20,5 +20,6 @@
     <string name="enable_camera_button_text">启动直播</string>
     <string name="streaming_settings_dialog_title">直播设置</string>
     <string name="streaming_quality_setting_text">直播画质：</string>
-    <string name="max_viewers_reached">服务端已达到最大观众数量。</string>>
+    <string name="max_viewers_reached">服务端已达到最大观众数量。</string>
+    <string name="app_update_needed">远程App需要升级</string>
 </resources>

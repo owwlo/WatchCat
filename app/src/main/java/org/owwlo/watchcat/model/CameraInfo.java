@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import com.alibaba.fastjson.annotation.JSONField;
 
 import org.owwlo.watchcat.services.ServiceDaemon;
+import org.owwlo.watchcat.utils.Utils;
 
 import java.util.Objects;
 
@@ -33,12 +34,15 @@ public class CameraInfo implements Parcelable {
     @JSONField(name = "name")
     private String name;
 
+    @JSONField(name = "version")
+    private int version;
+
     public CameraInfo() {
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, width, height, streamingPort, controlPort, thumbnailTimestamp, name);
+        return Objects.hash(enabled, width, height, streamingPort, controlPort, thumbnailTimestamp, name, version);
     }
 
     @Override
@@ -52,6 +56,7 @@ public class CameraInfo implements Parcelable {
                     && controlPort == other.controlPort
                     && thumbnailTimestamp == other.thumbnailTimestamp
                     && name.equals(other.name)
+                    && version == other.version
                     ;
         } else {
             return false;
@@ -66,6 +71,7 @@ public class CameraInfo implements Parcelable {
         controlPort = in.readInt();
         thumbnailTimestamp = in.readLong();
         name = in.readString();
+        version = in.readInt();
     }
 
     @Override
@@ -77,6 +83,7 @@ public class CameraInfo implements Parcelable {
         dest.writeInt(controlPort);
         dest.writeLong(thumbnailTimestamp);
         dest.writeString(name);
+        dest.writeInt(version);
     }
 
     public ServiceDaemon.RUNNING_MODE getRunningMode() {
@@ -154,5 +161,18 @@ public class CameraInfo implements Parcelable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public boolean isCompatible()
+    {
+        return Utils.isStreamerVersionCompatible(getVersion());
     }
 }

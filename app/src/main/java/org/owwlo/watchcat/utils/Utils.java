@@ -276,4 +276,15 @@ public class Utils {
         }
     }
 
+    public static int getAppVersion() {
+        return BuildConfig.VERSION_CODE;
+    }
+
+    public static boolean isStreamerVersionCompatible(int ver) {
+        // Hodor added
+        if (ver >= 78) {
+            return true;
+        }
+        return false;
+    }
 }

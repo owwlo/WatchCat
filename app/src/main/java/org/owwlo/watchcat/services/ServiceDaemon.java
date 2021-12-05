@@ -237,6 +237,7 @@ public class ServiceDaemon extends Service implements NsdListener {
         CameraInfo info = new CameraInfo();
         info.setControlPort(ServiceDaemon.getInstance().getControlPort());
         info.setName(Utils.getDeviceId());
+        info.setVersion(Utils.getAppVersion());
 
         CameraDaemon cameraDaemon = CameraDaemon.getInstance();
         if (cameraDaemon != null) {

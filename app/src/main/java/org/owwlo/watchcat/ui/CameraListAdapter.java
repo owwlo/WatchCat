@@ -12,6 +12,7 @@ import com.android.volley.toolbox.NetworkImageView;
 
 import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.model.Camera;
+import org.owwlo.watchcat.model.CameraInfo;
 import org.owwlo.watchcat.utils.NetworkImageLoader;
 
 import java.util.ArrayList;
@@ -46,13 +47,14 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
         public TextView description;
         public TextView name;
         public NetworkImageView preview;
+        public View appNeedsUpdate;
 
         public MyViewHolder(View view) {
             super(view);
             name = view.findViewById(R.id.text_camera_card_name);
             description = view.findViewById(R.id.text_camera_description);
             preview = view.findViewById(R.id.image_camera_preview);
-
+            appNeedsUpdate = view.findViewById(R.id.app_update_needed_text);
         }
     }
 
@@ -69,21 +71,34 @@ public class CameraListAdapter extends RecyclerView.Adapter<CameraListAdapter.My
         return holder;
     }
 
+    private void checkVersionCompatibility(MyViewHolder holder, CameraInfo info) {
+        if (info.isCompatible()) {
+            holder.preview.setVisibility(View.VISIBLE);
+            holder.appNeedsUpdate.setVisibility(View.INVISIBLE);
+        } else {
+            holder.preview.setVisibility(View.INVISIBLE);
+            holder.appNeedsUpdate.setVisibility(View.VISIBLE);
+        }
+    }
+
     @Override
     public void onBindViewHolder(final MyViewHolder holder, int position) {
         final Camera camera = cameraList.get(position);
         holder.name.setText(camera.getInfo().getName());
         holder.description.setText(camera.getIp());
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                notifyListener(holder, camera);
-            }
-        });
+        checkVersionCompatibility(holder, camera.getInfo());
 
-        NetworkImageLoader.getInstance(CameraListAdapter.this.mContext)
-                .setImageFromUrl(holder.preview,
-                        camera.getUrls().getCameraPreviewURI(camera.getInfo().getThumbnailTimestamp()));
+        if (camera.getInfo().isCompatible()) {
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    notifyListener(holder, camera);
+                }
+            });
+            NetworkImageLoader.getInstance(CameraListAdapter.this.mContext)
+                    .setImageFromUrl(holder.preview,
+                            camera.getUrls().getCameraPreviewURI(camera.getInfo().getThumbnailTimestamp()));
+        }
     }
 
     @Override
