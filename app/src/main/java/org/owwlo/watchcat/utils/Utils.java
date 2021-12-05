@@ -282,7 +282,7 @@ public class Utils {
 
     public static boolean isStreamerVersionCompatible(int ver) {
         // Hodor added
-        if (ver >= 78) {
+        if (ver >= 80) {
             return true;
         }
         return false;

@@ -5,9 +5,9 @@ apply plugin: 'me.moallemi.advanced-build-version'
 
 advancedVersioning {
     nameOptions {
-        versionMajor 0
+        versionMajor 1
         versionMinor 0
-        versionPatch 1
+        versionPatch 0
     }
     codeOptions {
         versionCodeType 'GIT_COMMIT_COUNT'
@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId 'org.owwlo.watchcat'
-        targetSdkVersion 29
+        targetSdkVersion 30
         minSdkVersion 23
         versionCode advancedVersioning.versionCode
         versionName advancedVersioning.versionName
