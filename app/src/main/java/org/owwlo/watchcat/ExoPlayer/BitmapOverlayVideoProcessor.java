@@ -102,9 +102,9 @@ public class BitmapOverlayVideoProcessor
     @Override
     public void draw(int frameTexture, long frameTimestampUs, float[] transformMatrix) {
         // Draw to the canvas and store it in a texture.
-        String text = this.context.getString(R.string.streaming_player_elapsed_prefix_text) + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
+        String text = this.context.getString(R.string.streaming_player_elapsed_prefix_text) + " " + getTimeElapsed(frameTimestampUs / (float) C.MICROS_PER_SECOND);
         overlayBitmap.eraseColor(Color.TRANSPARENT);
-        overlayCanvas.drawText(text, /* x= */ 50, /* y= */ 50, paint);
+        overlayCanvas.drawText(text, /* x= */ 75, /* y= */ 75, paint);
         GLES20.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
         GLUtils.texSubImage2D(
                 GL10.GL_TEXTURE_2D, /* level= */ 0, /* xoffset= */ 0, /* yoffset= */ 0, overlayBitmap);

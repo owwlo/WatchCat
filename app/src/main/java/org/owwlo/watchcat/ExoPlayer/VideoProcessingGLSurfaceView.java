@@ -16,10 +16,12 @@
 package org.owwlo.watchcat.ExoPlayer;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.MediaFormat;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
+import android.opengl.GLException;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
 import android.view.Surface;
@@ -35,6 +37,9 @@ import com.google.android.exoplayer2.util.GlUtil;
 import com.google.android.exoplayer2.util.TimedValueQueue;
 import com.google.android.exoplayer2.video.VideoFrameMetadataListener;
 
+import java.nio.IntBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGL10;
@@ -44,6 +49,8 @@ import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
+import owwlo.WhatCat.Utils.SnapshotUtils;
+
 /**
  * {@link GLSurfaceView} that creates a GL context (optionally for protected content) and passes
  * video frames to a {@link VideoProcessor} for drawing to the view.
@@ -52,7 +59,6 @@ import javax.microedition.khronos.opengles.GL10;
  * supporting protected content should be created at construction time.
  */
 public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
-
     /**
      * Processes video frames, provided via a GL texture.
      */
@@ -224,6 +230,91 @@ public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
         }
     }
 
+    public interface SnapshotterProcessor {
+        void onFrameDrawn(GL10 gl, int width, int height);
+    }
+
+    private class Snapshotter {
+        private int width;
+        private int height;
+        private boolean takingSnapshot = false;
+        private SnapshotterProcessor snapshotterProcessor = null;
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        public Snapshotter() {
+            snapshotterProcessor = new SnapshotterProcessor() {
+                // ref: https://stackoverflow.com/a/12899426
+                private IntBuffer cloneBufferFromGL(int w, int h, GL10 gl) {
+                    int bitmapBuffer[] = new int[w * h];
+                    IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
+                    intBuffer.position(0);
+
+                    try {
+                        gl.glReadPixels(0, 0, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
+                    } catch (GLException e) {
+                        return null;
+                    }
+                    return intBuffer;
+                }
+
+                private Bitmap createBitmapFromGLSurface(int w, int h, IntBuffer intBuffer)
+                        throws OutOfMemoryError {
+                    int bitmapSource[] = new int[w * h];
+                    int bitmapBuffer[] = intBuffer.array();
+                    try {
+                        int offset1, offset2;
+                        for (int i = 0; i < h; i++) {
+                            offset1 = i * w;
+                            offset2 = (h - i - 1) * w;
+                            for (int j = 0; j < w; j++) {
+                                int texturePixel = bitmapBuffer[offset1 + j];
+                                int blue = (texturePixel >> 16) & 0xff;
+                                int red = (texturePixel << 16) & 0x00ff0000;
+                                int pixel = (texturePixel & 0xff00ff00) | red | blue;
+                                bitmapSource[offset2 + j] = pixel;
+                            }
+                        }
+                    } catch (GLException e) {
+                        return null;
+                    }
+
+                    return Bitmap.createBitmap(bitmapSource, w, h, Bitmap.Config.ARGB_8888);
+                }
+
+                @Override
+                public void onFrameDrawn(GL10 gl, int width, int height) {
+                    if (takingSnapshot) {
+                        IntBuffer bufferClone = cloneBufferFromGL(width, height, gl);
+                        executor.execute(() -> {
+                            Bitmap bmp = createBitmapFromGLSurface(width, height, bufferClone);
+                            SnapshotUtils.Companion.saveMediaToStorage(bmp);
+                        });
+                        takingSnapshot = false;
+                    }
+                }
+            };
+        }
+
+        public void takeSnapshotOnNextFrame() {
+            takingSnapshot = true;
+        }
+
+        public void setSurfaceSize(int width, int height) {
+            this.width = width;
+            this.height = height;
+        }
+
+        public void onDrawFrame(GL10 gl) {
+            snapshotterProcessor.onFrameDrawn(gl, width, height);
+        }
+
+    }
+
+    public void takeSnapshot() {
+        renderer.getSnapshotter().takeSnapshotOnNextFrame();
+    }
+
     private final class VideoRenderer implements GLSurfaceView.Renderer, VideoFrameMetadataListener {
 
         private final VideoProcessor videoProcessor;
@@ -240,6 +331,12 @@ public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
         private int height;
         private long frameTimestampUs;
 
+        private Snapshotter snapshotter;
+
+        public Snapshotter getSnapshotter() {
+            return snapshotter;
+        }
+
         public VideoRenderer(VideoProcessor videoProcessor) {
             this.videoProcessor = videoProcessor;
             frameAvailable = new AtomicBoolean();
@@ -248,6 +345,7 @@ public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
             height = -1;
             frameTimestampUs = C.TIME_UNSET;
             transformMatrix = new float[16];
+            snapshotter = new Snapshotter();
         }
 
         @Override
@@ -282,6 +380,7 @@ public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
 
             if (width != -1 && height != -1) {
                 videoProcessor.setSurfaceSize(width, height);
+                snapshotter.setSurfaceSize(width, height);
                 width = -1;
                 height = -1;
             }
@@ -298,6 +397,7 @@ public final class VideoProcessingGLSurfaceView extends GLSurfaceView {
             }
 
             videoProcessor.draw(texture, frameTimestampUs, transformMatrix);
+            snapshotter.onDrawFrame(gl);
         }
 
         @Override

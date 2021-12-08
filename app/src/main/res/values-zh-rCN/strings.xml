@@ -22,4 +22,5 @@
     <string name="streaming_quality_setting_text">直播画质：</string>
     <string name="max_viewers_reached">服务端已达到最大观众数量。</string>
     <string name="app_update_needed">远程App需要升级</string>
+    <string name="snapshot_btn_text">截图</string>
 </resources>

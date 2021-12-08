@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.greenrobot.eventbus.EventBus;
 import org.owwlo.watchcat.ExoPlayer.BitmapOverlayVideoProcessor;
@@ -28,18 +30,22 @@ import org.owwlo.watchcat.R;
 import org.owwlo.watchcat.utils.EventBus.VideoPlayerStateChangeEvent;
 import org.owwlo.watchcat.utils.Toaster;
 
-public final class ExoPlayerActivity extends Activity {
+public final class ExoPlayerActivity extends Activity implements View.OnClickListener {
     public final static String TAG = ExoPlayerActivity.class.getSimpleName();
 
     public static final String INTENT_EXTRA_URI = "INTENT_EXTRA_URI";
 
     @Nullable
     private PlayerView playerView;
+
     @Nullable
     private VideoProcessingGLSurfaceView videoProcessingGLSurfaceView;
 
     @Nullable
     private SimpleExoPlayer player;
+
+    private FloatingActionButton btnSnapshot = null;
+    private FloatingActionButton btnBack = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +60,11 @@ public final class ExoPlayerActivity extends Activity {
         FrameLayout contentFrame = findViewById(R.id.exo_content_frame);
         contentFrame.addView(videoProcessingGLSurfaceView);
         this.videoProcessingGLSurfaceView = videoProcessingGLSurfaceView;
+
+        btnBack = findViewById(R.id.exoplayer_exit_button);
+        btnSnapshot = findViewById(R.id.snapshot_button);
+        btnBack.setOnClickListener(this);
+        btnSnapshot.setOnClickListener(this);
     }
 
     @Override
@@ -135,6 +146,7 @@ public final class ExoPlayerActivity extends Activity {
         videoProcessingGLSurfaceView.setVideoComponent(
                 Assertions.checkNotNull(player.getVideoComponent()));
         Assertions.checkNotNull(playerView).setPlayer(player);
+        playerView.setUseController(false);
         player.addAnalyticsListener(new EventLogger(/* trackSelector= */ null));
         this.player = player;
     }
@@ -145,6 +157,21 @@ public final class ExoPlayerActivity extends Activity {
             player.release();
             Assertions.checkNotNull(videoProcessingGLSurfaceView).setVideoComponent(null);
             player = null;
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        int id = view.getId();
+        switch (id) {
+            case R.id.exoplayer_exit_button: {
+                finish();
+                break;
+            }
+            case R.id.snapshot_button: {
+                videoProcessingGLSurfaceView.takeSnapshot();
+                break;
+            }
         }
     }
 }
